@@ -71,114 +71,22 @@
         .print-iframe { position: absolute; width: 0; height: 0; border: none; visibility: hidden; }
         
         /* 手机扫码页面样式 */
-        .scan-page { max-width: 500px; margin: 0 auto; padding: 20px; min-height: 100vh; background: #e9f0f5; }
+        .mobile-scan-page { max-width: 500px; margin: 0 auto; padding: 20px; min-height: 100vh; background: #e9f0f5; }
         .product-card { background: white; border-radius: 24px; padding: 24px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); margin-bottom: 20px; }
         .product-title { font-size: 22px; font-weight: bold; color: #1f6e8c; text-align: center; margin-bottom: 20px; padding-bottom: 12px; border-bottom: 2px solid #e2edf5; }
         .info-row { display: flex; padding: 12px 0; border-bottom: 1px solid #f0f0f0; }
         .info-label { width: 85px; font-weight: bold; color: #5e7e97; font-size: 14px; }
         .info-value { flex: 1; font-weight: 500; color: #333; font-size: 14px; }
         .net-value { color: #c00; font-weight: bold; font-size: 16px; }
-        .out-btn { width: 100%; padding: 16px; background: #2e7d32; color: white; border: none; border-radius: 50px; font-size: 18px; font-weight: bold; cursor: pointer; margin-top: 10px; }
-        .out-btn.disabled { background: #ccc; cursor: not-allowed; }
-        .out-btn:active { transform: scale(0.98); }
+        .mobile-out-btn { width: 100%; padding: 16px; background: #2e7d32; color: white; border: none; border-radius: 50px; font-size: 18px; font-weight: bold; cursor: pointer; margin-top: 10px; }
+        .mobile-out-btn.disabled { background: #ccc; cursor: not-allowed; }
         .status-badge { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 12px; margin-left: 10px; }
         .status-pending { background: #fff3e0; color: #e67e22; }
         .status-out { background: #ffebee; color: #c62828; }
-        .back-home { text-align: center; margin-top: 20px; }
-        .back-home a { color: #1f6e8c; text-decoration: none; font-size: 14px; }
     </style>
 </head>
 <body>
-<div id="app">
-    <!-- PC端完整系统 -->
-    <div class="pc-container" id="pcApp">
-        <div class="header">
-            <div class="logo-area">
-                <h1>🏭 纺织生产端管理系统 <span style="font-size:0.7rem; background:#e8f5e9; padding:2px 8px; border-radius:20px;">A系统</span></h1>
-                <p>打印标签 | 扫码出库 | 库存管理 | 出入仓记录</p>
-            </div>
-        </div>
-        <div class="tab-bar">
-            <div class="tab active" data-tab="print">🖨️ 打印标签</div>
-            <div class="tab" data-tab="scan">📷 扫码出库</div>
-            <div class="tab" data-tab="stock">📦 库存管理</div>
-            <div class="tab" data-tab="in">📥 入仓记录</div>
-            <div class="tab" data-tab="out">📤 出仓记录</div>
-        </div>
-        <div class="main-content">
-            <!-- 打印标签面板 -->
-            <div id="printPanel" class="panel active">
-                <div class="form-grid">
-                    <div class="form-group"><label>规格 *</label><input type="text" id="spec" placeholder="例: 32S/2" value="32S/2"></div>
-                    <div class="form-group"><label>色号 <span class="optional">(可选)</span></label><input type="text" id="color" placeholder="色号" value="深灰"></div>
-                    <div class="form-group"><label>机号 *</label><input type="text" id="machine" placeholder="机号" value="8#"></div>
-                    <div class="form-group"><label>数量(个/卷) *</label><input type="number" id="qty" value="120"></div>
-                    <div class="form-group"><label>毛重(kg) *</label><input type="number" step="0.01" id="gross" value="62.30"></div>
-                    <div class="form-group"><label>筒重(kg) *</label><input type="number" step="0.01" id="tong" value="2.20"></div>
-                    <div class="form-group"><label>箱重(kg) *</label><input type="number" step="0.01" id="box" value="3.10"></div>
-                    <div class="form-group"><label>打包 *</label><input type="text" id="handler" placeholder="打包人姓名" value="李芳"></div>
-                    <div class="form-group"><label>批号 <span class="optional">(可选)</span></label><input type="text" id="batch" placeholder="批号" value="B20240601"></div>
-                </div>
-                <div class="net-weight-display">⚖️ 净重：<span id="netDisplay">0.00</span> kg (毛重 - 筒重 - 箱重)</div>
-                <button class="btn btn-success" id="printBtn">🖨️ 打印标签并入仓</button>
-                <div id="printStatus" style="margin-top:15px;"></div>
-            </div>
-
-            <!-- PC端扫码出库面板 -->
-            <div id="scanPanel" class="panel">
-                <div class="form-group" style="max-width:400px">
-                    <label>扫描二维码（扫码枪或手动输入）</label>
-                    <input type="text" id="scanInput" placeholder="扫描二维码..." style="padding:12px;font-size:16px">
-                </div>
-                <button class="btn btn-success" id="confirmOutBtn" style="margin-top:15px;">✅ 转为待出库</button>
-                <div id="outstockStatus" style="margin-top:15px;"></div>
-                <div style="margin-top:20px; padding:12px; background:#f0f6fa; border-radius:12px;">
-                    <h4>📱 手机扫码说明</h4>
-                    <p>用手机相机扫描标签二维码，会自动打开产品详情页，点击"确认出库"即可转为待出库。</p>
-                </div>
-            </div>
-
-            <!-- 库存管理面板 -->
-            <div id="stockPanel" class="panel">
-                <div class="sub-tab-bar">
-                    <div class="sub-tab active" data-subtab="current">📦 当前库存</div>
-                    <div class="sub-tab" data-subtab="pending">⏳ 待出库列表</div>
-                </div>
-                <div id="currentStockPanel">
-                    <div class="search-bar">
-                        <input type="text" id="stockSearch" placeholder="搜索规格/机号/批号...">
-                        <button class="btn" id="refreshStockBtn">🔄 刷新</button>
-                    </div>
-                    <div id="stockList"></div>
-                </div>
-                <div id="pendingStockPanel" style="display:none;">
-                    <div style="margin-bottom:15px;">
-                        <button class="btn btn-success" id="batchOutBtn">📦 批量出库</button>
-                        <span style="margin-left:15px; color:#666;">勾选后点击批量出库，将扣减库存并移入出仓记录</span>
-                    </div>
-                    <div class="table-wrapper">
-                        <table class="data-table" id="pendingTable">
-                            <thead><tr><th style="width:40px;"><input type="checkbox" id="selectAllPending"></th><th>标签ID</th><th>规格</th><th>色号</th><th>机号</th><th>数量</th><th>净重(kg)</th><th>打包</th><th>批号</th><th>扫码时间</th></tr></thead>
-                            <tbody id="pendingTableBody"></tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-
-            <!-- 入仓记录面板 -->
-            <div id="inPanel" class="panel">
-                <div class="search-bar"><input type="text" id="inSearch" placeholder="搜索..."><button class="btn" id="searchInBtn">🔍 搜索</button><button class="btn" id="refreshInBtn">📋 全部</button></div>
-                <div class="table-wrapper"><table class="data-table"><thead><tr><th>标签ID</th><th>规格</th><th>色号</th><th>机号</th><th>数量</th><th>毛重</th><th>净重</th><th>批号</th><th>入仓日期</th></tr></thead><tbody id="inTableBody"></tbody></table></div>
-            </div>
-
-            <!-- 出仓记录面板 -->
-            <div id="outPanel" class="panel">
-                <div class="search-bar"><input type="text" id="outSearch" placeholder="搜索..."><button class="btn" id="searchOutBtn">🔍 搜索</button><button class="btn" id="refreshOutBtn">📋 全部</button></div>
-                <div class="table-wrapper"><table class="data-table"><thead><tr><th>标签ID</th><th>规格</th><th>色号</th><th>机号</th><th>数量</th><th>净重</th><th>批号</th><th>出库日期</th></tr></thead><tbody id="outTableBody"></tbody></table></div>
-            </div>
-        </div>
-    </div>
-</div>
+<div id="app"></div>
 
 <div id="adjustModal" class="modal">
     <div class="modal-content">
@@ -208,26 +116,24 @@
     
     if (scanId) {
         // 手机扫码模式 - 只显示产品卡片和出库按钮
-        document.getElementById('app').innerHTML = '<div id="mobileScan" style="min-height:100vh; background:#e9f0f5;"></div>';
-        loadMobileScanPage(scanId);
+        renderMobileScan(scanId);
     } else {
         // PC模式 - 正常加载系统
-        initPCSystem();
+        renderPCSystem();
     }
     
-    async function loadMobileScanPage(tagId) {
-        const container = document.getElementById('mobileScan');
+    async function renderMobileScan(tagId) {
+        const app = document.getElementById('app');
         
         // 查询产品信息
         const { data: tagData, error } = await supabase.from('tag_records').select('*').eq('tag_id', tagId).single();
         
         if (error || !tagData) {
-            container.innerHTML = `
-                <div class="scan-page">
+            app.innerHTML = `
+                <div class="mobile-scan-page">
                     <div class="product-card" style="text-align:center; color:#c62828;">
                         <h2>❌ 未找到产品</h2>
                         <p>二维码无效或产品不存在</p>
-                        <div class="back-home"><a href="javascript:history.back()">← 返回</a></div>
                     </div>
                 </div>
             `;
@@ -248,8 +154,8 @@
             btnText = '⏳ 已在待出库列表';
         }
         
-        container.innerHTML = `
-            <div class="scan-page">
+        app.innerHTML = `
+            <div class="mobile-scan-page">
                 <div class="product-card">
                     <div class="product-title">📦 产品信息 ${statusBadge}</div>
                     <div class="info-row"><div class="info-label">标签ID</div><div class="info-value">${escapeHtml(tagData.tag_id)}</div></div>
@@ -263,8 +169,7 @@
                     <div class="info-row"><div class="info-label">批号</div><div class="info-value">${escapeHtml(tagData.batch || '-')}</div></div>
                     <div class="info-row"><div class="info-label">生产日期</div><div class="info-value">${tagData.date}</div></div>
                 </div>
-                <button id="mobileOutBtn" class="out-btn" ${btnDisabled ? 'disabled' : ''}>${btnText}</button>
-                <div class="back-home"><a href="javascript:history.back()">← 返回</a></div>
+                <button id="mobileOutBtn" class="mobile-out-btn" ${btnDisabled ? 'disabled' : ''}>${btnText}</button>
             </div>
         `;
         
@@ -284,19 +189,111 @@
                     btn.disabled = false;
                     btn.innerText = '📤 确认出库';
                 } else {
-                    alert('✅ 已转为待出库！请在库存管理页面批量确认出库。');
+                    alert('✅ 已转为待出库！请在电脑端库存管理页面批量确认出库。');
                     btn.innerText = '✓ 已转为待出库';
-                    // 刷新页面显示状态
-                    location.reload();
+                    btn.disabled = true;
                 }
             };
         }
     }
     
-    async function initPCSystem() {
-        // 初始化各种事件和加载数据...
-        // 以下代码与之前相同，为了完整保留功能，这里继续写...
+    function renderPCSystem() {
+        const app = document.getElementById('app');
         
+        app.innerHTML = `
+            <div class="pc-container">
+                <div class="header">
+                    <div class="logo-area">
+                        <h1>🏭 纺织生产端管理系统 <span style="font-size:0.7rem; background:#e8f5e9; padding:2px 8px; border-radius:20px;">A系统</span></h1>
+                        <p>打印标签 | 扫码出库 | 库存管理 | 出入仓记录</p>
+                    </div>
+                </div>
+                <div class="tab-bar">
+                    <div class="tab active" data-tab="print">🖨️ 打印标签</div>
+                    <div class="tab" data-tab="scan">📷 扫码出库</div>
+                    <div class="tab" data-tab="stock">📦 库存管理</div>
+                    <div class="tab" data-tab="in">📥 入仓记录</div>
+                    <div class="tab" data-tab="out">📤 出仓记录</div>
+                </div>
+                <div class="main-content">
+                    <!-- 打印标签面板 -->
+                    <div id="printPanel" class="panel active">
+                        <div class="form-grid">
+                            <div class="form-group"><label>规格 *</label><input type="text" id="spec" placeholder="例: 32S/2" value="32S/2"></div>
+                            <div class="form-group"><label>色号 <span class="optional">(可选)</span></label><input type="text" id="color" placeholder="色号" value="深灰"></div>
+                            <div class="form-group"><label>机号 *</label><input type="text" id="machine" placeholder="机号" value="8#"></div>
+                            <div class="form-group"><label>数量(个/卷) *</label><input type="number" id="qty" value="120"></div>
+                            <div class="form-group"><label>毛重(kg) *</label><input type="number" step="0.01" id="gross" value="62.30"></div>
+                            <div class="form-group"><label>筒重(kg) *</label><input type="number" step="0.01" id="tong" value="2.20"></div>
+                            <div class="form-group"><label>箱重(kg) *</label><input type="number" step="0.01" id="box" value="3.10"></div>
+                            <div class="form-group"><label>打包 *</label><input type="text" id="handler" placeholder="打包人姓名" value="李芳"></div>
+                            <div class="form-group"><label>批号 <span class="optional">(可选)</span></label><input type="text" id="batch" placeholder="批号" value="B20240601"></div>
+                        </div>
+                        <div class="net-weight-display">⚖️ 净重：<span id="netDisplay">0.00</span> kg (毛重 - 筒重 - 箱重)</div>
+                        <button class="btn btn-success" id="printBtn">🖨️ 打印标签并入仓</button>
+                        <div id="printStatus" style="margin-top:15px;"></div>
+                    </div>
+
+                    <!-- PC端扫码出库面板 -->
+                    <div id="scanPanel" class="panel">
+                        <div class="form-group" style="max-width:400px">
+                            <label>扫描二维码（扫码枪或手动输入）</label>
+                            <input type="text" id="scanInput" placeholder="扫描二维码..." style="padding:12px;font-size:16px">
+                        </div>
+                        <button class="btn btn-success" id="confirmOutBtn" style="margin-top:15px;">✅ 转为待出库</button>
+                        <div id="outstockStatus" style="margin-top:15px;"></div>
+                        <div style="margin-top:20px; padding:12px; background:#f0f6fa; border-radius:12px;">
+                            <h4>📱 手机扫码说明</h4>
+                            <p>用手机相机扫描标签二维码，会自动打开产品详情页，点击"确认出库"即可转为待出库。</p>
+                        </div>
+                    </div>
+
+                    <!-- 库存管理面板 -->
+                    <div id="stockPanel" class="panel">
+                        <div class="sub-tab-bar">
+                            <div class="sub-tab active" data-subtab="current">📦 当前库存</div>
+                            <div class="sub-tab" data-subtab="pending">⏳ 待出库列表</div>
+                        </div>
+                        <div id="currentStockPanel">
+                            <div class="search-bar">
+                                <input type="text" id="stockSearch" placeholder="搜索规格/机号/批号...">
+                                <button class="btn" id="refreshStockBtn">🔄 刷新</button>
+                            </div>
+                            <div id="stockList"></div>
+                        </div>
+                        <div id="pendingStockPanel" style="display:none;">
+                            <div style="margin-bottom:15px;">
+                                <button class="btn btn-success" id="batchOutBtn">📦 批量出库</button>
+                                <span style="margin-left:15px; color:#666;">勾选后点击批量出库，将扣减库存并移入出仓记录</span>
+                            </div>
+                            <div class="table-wrapper">
+                                <table class="data-table" id="pendingTable">
+                                    <thead><tr><th style="width:40px;"><input type="checkbox" id="selectAllPending"></th><th>标签ID</th><th>规格</th><th>色号</th><th>机号</th><th>数量</th><th>净重(kg)</th><th>打包</th><th>批号</th><th>扫码时间</th></tr></thead>
+                                    <tbody id="pendingTableBody"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 入仓记录面板 -->
+                    <div id="inPanel" class="panel">
+                        <div class="search-bar"><input type="text" id="inSearch" placeholder="搜索..."><button class="btn" id="searchInBtn">🔍 搜索</button><button class="btn" id="refreshInBtn">📋 全部</button></div>
+                        <div class="table-wrapper"><table class="data-table"><thead><tr><th>标签ID</th><th>规格</th><th>色号</th><th>机号</th><th>数量</th><th>毛重</th><th>净重</th><th>批号</th><th>入仓日期</th></tr></thead><tbody id="inTableBody"></tbody></table></div>
+                    </div>
+
+                    <!-- 出仓记录面板 -->
+                    <div id="outPanel" class="panel">
+                        <div class="search-bar"><input type="text" id="outSearch" placeholder="搜索..."><button class="btn" id="searchOutBtn">🔍 搜索</button><button class="btn" id="refreshOutBtn">📋 全部</button></div>
+                        <div class="table-wrapper"><table class="data-table"><thead><tr><th>标签ID</th><th>规格</th><th>色号</th><th>机号</th><th>数量</th><th>净重</th><th>批号</th><th>出库日期</th></tr></thead><tbody id="outTableBody"></tbody></table></div>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        initPCSystem();
+    }
+    
+    function initPCSystem() {
         function showToast(msg) {
             let div = document.createElement('div');
             div.className = 'toast-msg';
@@ -484,7 +481,18 @@
             if (error) return;
             const tbody = document.getElementById('pendingTableBody');
             if (!data || data.length === 0) { tbody.innerHTML = '<tr><td colspan="10" style="text-align:center">暂无待出库记录</td></tr>'; return; }
-            tbody.innerHTML = data.map(item => `<td><td><input type="checkbox" class="pending-checkbox" data-id="${escapeHtml(item.tag_id)}"></td><td>${escapeHtml(item.tag_id)}</td><td>${escapeHtml(item.spec)}</td><td>${escapeHtml(item.color || '-')}</td><td>${escapeHtml(item.machine)}</td><td>${item.qty}</td><td>${item.net.toFixed(2)}</td><td>${escapeHtml(item.handler || '-')}</td><td>${escapeHtml(item.batch || '-')}</td><td>${item.pending_time ? new Date(item.pending_time).toLocaleString() : '-'}</td></tr>`).join('');
+            tbody.innerHTML = data.map(item => `<tr>
+                <td><input type="checkbox" class="pending-checkbox" data-id="${escapeHtml(item.tag_id)}"></td>
+                <td>${escapeHtml(item.tag_id)}</td>
+                <td>${escapeHtml(item.spec)}</td>
+                <td>${escapeHtml(item.color || '-')}</td>
+                <td>${escapeHtml(item.machine)}</td>
+                <td>${item.qty}</td>
+                <td>${item.net.toFixed(2)}</td>
+                <td>${escapeHtml(item.handler || '-')}</td>
+                <td>${escapeHtml(item.batch || '-')}</td>
+                <td>${item.pending_time ? new Date(item.pending_time).toLocaleString() : '-'}</td>
+            </tr>`).join('');
             document.getElementById('selectAllPending').onclick = (e) => { document.querySelectorAll('.pending-checkbox').forEach(cb => cb.checked = e.target.checked); };
         }
         
@@ -518,7 +526,7 @@
             const searchVal = document.getElementById('stockSearch')?.value.toLowerCase() || '';
             const filtered = (data || []).filter(item => item.spec.toLowerCase().includes(searchVal) || (item.machine_no || '').toLowerCase().includes(searchVal));
             if (!filtered.length) { document.getElementById('stockList').innerHTML = '<p>暂无库存数据</p>'; return; }
-            document.getElementById('stockList').innerHTML = filtered.map(item => `<div class="stock-item"><div><strong>${escapeHtml(item.spec)}</strong> ${item.color_no ? '| 色号:' + escapeHtml(item.color_no) : ''} ${item.machine_no ? '| 机号:' + escapeHtml(item.machine_no) : ''} ${item.batch_no ? '| 批号:' + escapeHtml(item.batch_no) : ''}</div><div>📦 数量: ${item.quantity} | ⚖️ 净重: ${(item.net_weight || 0).toFixed(2)}kg</div><div><button class="btn btn-warning" style="padding:5px 12px;font-size:12px" onclick="openAdjustModal('${item.id}')">✏️ 手动调整</button></div></div>`).join('');
+            document.getElementById('stockList').innerHTML = filtered.map(item => `<div class="stock-item"><div><strong>${escapeHtml(item.spec)}</strong> ${item.color_no ? '| 色号:' + escapeHtml(item.color_no) : ''} ${item.machine_no ? '| 机号:' + escapeHtml(item.machine_no) : ''} ${item.batch_no ? '| 批号:' + escapeHtml(item.batch_no) : ''}</div><div>📦 数量: ${item.quantity} | ⚖️ 净重: ${(item.net_weight || 0).toFixed(2)}kg</div><div><button class="btn btn-warning" style="padding:5px 12px;font-size:12px" onclick="window.openAdjustModal('${item.id}')">✏️ 手动调整</button></div></div>`).join('');
         }
         
         window.openAdjustModal = function(id) { currentAdjustId = id; document.getElementById('adjustModal').style.display = 'flex'; };
