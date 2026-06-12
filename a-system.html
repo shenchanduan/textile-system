@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>纺织生产端管理系统 - A系统</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { background: #e9f0f5; font-family: 'Segoe UI', 'SimSun', sans-serif; padding: 16px; }
+        .app-container { max-width: 1400px; margin: 0 auto; background: white; border-radius: 28px; overflow: hidden; box-shadow: 0 8px 20px rgba(0,0,0,0.08); }
+        .header { background: white; padding: 14px 20px; border-bottom: 1px solid #e2e9f0; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 10px; }
+        .logo-area h1 { font-size: 1.3rem; color: #1f6e8c; }
+        .logo-area p { font-size: 0.7rem; color: #5e7e97; }
+        .tab-bar { display: flex; border-bottom: 2px solid #e2edf5; background: #fafdff; overflow-x: auto; }
+        .tab { padding: 12px 20px; cursor: pointer; font-weight: 600; color: #5e7e97; border-bottom: 3px solid transparent; white-space: nowrap; font-size: 0.9rem; }
+        .tab.active { color: #1f6e8c; border-bottom-color: #1f6e8c; background: white; }
+        .main-content { padding: 20px; }
+        .panel { display: none; }
+        .panel.active { display: block; }
+        
+        /* 表单样式 */
+        .form-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px; }
+        .form-group { display: flex; flex-direction: column; }
+        .form-group label { font-weight: bold; margin-bottom: 5px; color: #333; font-size: 13px; }
+        .form-group label .optional { font-weight: normal; color: #999; font-size: 11px; }
+        .form-group input { padding: 8px 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; }
+        .btn { background: #1f6e8c; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: bold; }
+        .btn-success { background: #2e7d32; }
+        .btn-warning { background: #e67e22; }
+        .btn-danger { background: #c0392b; }
+        .net-weight-display { background: #e8f5e9; padding: 8px 12px; border-radius: 6px; font-weight: bold; color: #2e7d32; margin-bottom: 15px; }
+        
+        /* 表格 */
+        .table-wrapper { overflow-x: auto; margin-top: 15px; border: 1px solid #e2edf5; border-radius: 12px; }
+        .data-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+        .data-table th, .data-table td { border: 1px solid #e2edf5; padding: 10px 8px; text-align: left; }
+        .data-table th { background: #eef3fc; font-weight: 700; }
+        .search-bar { display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap; }
+        .search-bar input { flex: 1; padding: 8px 12px; border: 1px solid #ddd; border-radius: 20px; }
+        .stock-item { background: #f8f9fa; padding: 12px; margin-bottom: 10px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
+        
+        /* 标签打印样式 */
+        .label-print { width: 100mm; height: 100mm; background: white; border: 1px solid #000; padding: 3mm; position: relative; font-family: 'SimSun', '宋体', monospace; margin: 0 auto; }
+        .label-print .company, .label-print .address, .label-print .field-name, .label-print .field-value, .label-print .footer { font-weight: bold; }
+        .label-print .company { text-align: center; font-size: 19pt; font-weight: bold; }
+        .label-print .address { text-align: center; font-size: 11pt; line-height: 1.2; font-weight: bold; }
+        .label-print .top-line { border-top: 0.5px solid #000; margin: 2mm 0; }
+        .label-print .mid-line { border-top: 0.5px solid #000; margin: 4mm 0 2mm 0; }
+        .label-print .two-col { display: flex; justify-content: space-between; margin: 2mm 0 0 0; }
+        .label-print .left-col, .label-print .right-col { width: 45%; }
+        .label-print .field { margin-bottom: 2mm; display: flex; align-items: baseline; }
+        .label-print .field-name { width: 12mm; font-size: 13pt; font-weight: bold; }
+        .label-print .field-value { font-size: 13pt; padding-left: 2mm; font-weight: bold; }
+        .label-print .red .field-name, .label-print .red .field-value { color: #c00; font-weight: bold; }
+        .label-print .date-row { display: flex; align-items: baseline; margin-top: 2mm; width: 100%; }
+        .label-print .date-row .field-name { width: 12mm; font-size: 13pt; font-weight: bold; }
+        .label-print .date-row .field-value { flex: 1; font-size: 13pt; padding-left: 2mm; font-weight: bold; }
+        .label-print .footer { position: absolute; bottom: 8mm; left: 7mm; font-size: 16pt; font-weight: bold; color: #c00; line-height: 1.3; }
+        .label-print .qr-area { position: absolute; bottom: 3mm; right: 12mm; text-align: center; }
+        .label-print .qr-img { width: 24mm; height: 24mm; }
+        @page { size: 100mm 100mm; margin: 0mm; }
+        @media print { body * { visibility: hidden; } .print-area, .print-area * { visibility: visible; } .print-area { position: absolute; left: 0; top: 0; width: 100%; } }
+        
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 1000; }
+        .modal-content { background: white; padding: 25px; border-radius: 12px; width: 350px; }
+        .toast-msg { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); background: #333; color: white; padding: 10px 20px; border-radius: 30px; font-size: 0.85rem; z-index: 2000; animation: fadeOut 2s ease; }
+        @keyframes fadeOut { 0% { opacity: 1; } 70% { opacity: 1; } 100% { opacity: 0; visibility: hidden; } }
+    </style>
+</head>
+<body>
+<div class="app-container">
+    <div class="header">
+        <div class="logo-area">
+            <h1>🏭 纺织生产端管理系统 <span style="font-size:0.7rem; background:#e8f5e9; padding:2px 8px; border-radius:20px;">A系统</span></h1>
+            <p>打印标签 | 扫码出库 | 库存管理 | 出入仓记录</p>
+        </div>
+    </div>
+    <div class="tab-bar">
+        <div class="tab active" data-tab="print">🖨️ 打印标签</div>
+        <div class="tab" data-tab="scan">📷 扫码出库</div>
+        <div class="tab" data-tab="stock">📦 库存管理</div>
+        <div class="tab" data-tab="in">📥 入仓记录</div>
+        <div class="tab" data-tab="out">📤 出仓记录</div>
+    </div>
+    <div class="main-content">
+        <!-- 打印标签面板 -->
+        <div id="printPanel" class="panel active">
+            <div class="form-grid">
+                <div class="form-group"><label>规格 *</label><input type="text" id="spec" placeholder="例: 32S/2" value="32S/2"></div>
+                <div class="form-group"><label>色号 <span class="optional">(可选)</span></label><input type="text" id="color" placeholder="色号" value="深灰"></div>
+                <div class="form-group"><label>机号 *</label><input type="text" id="machine" placeholder="机号" value="8#"></div>
+                <div class="form-group"><label>数量(个/卷) *</label><input type="number" id="qty" value="120"></div>
+                <div class="form-group"><label>毛重(kg) *</label><input type="number" step="0.01" id="gross" value="62.30"></div>
+                <div class="form-group"><label>筒重(kg) *</label><input type="number" step="0.01" id="tong" value="2.20"></div>
+                <div class="form-group"><label>箱重(kg) *</label><input type="number" step="0.01" id="box" value="3.10"></div>
+                <div class="form-group"><label>包装 *</label><input type="text" id="handler" placeholder="包装" value="编织袋"></div>
+                <div class="form-group"><label>批号 <span class="optional">(可选)</span></label><input type="text" id="batch" placeholder="批号" value="B20240601"></div>
+            </div>
+            <div class="net-weight-display">⚖️ 净重：<span id="netDisplay">0.00</span> kg (毛重 - 筒重 - 箱重)</div>
+            <button class="btn btn-success" id="printBtn">🖨️ 打印标签并入仓</button>
+            <div id="printStatus" style="margin-top:15px;"></div>
+        </div>
+
+        <!-- 扫码出库面板 -->
+        <div id="scanPanel" class="panel">
+            <div class="form-group" style="max-width:400px">
+                <label>扫描或输入二维码内容</label>
+                <input type="text" id="scanInput" placeholder="扫描二维码..." style="padding:12px;font-size:16px">
+            </div>
+            <button class="btn btn-success" id="confirmOutBtn" style="margin-top:15px;">✅ 确认出库</button>
+            <div id="outstockStatus" style="margin-top:15px;"></div>
+        </div>
+
+        <!-- 库存管理面板 -->
+        <div id="stockPanel" class="panel">
+            <div class="search-bar">
+                <input type="text" id="stockSearch" placeholder="搜索规格/机号/批号...">
+                <button class="btn" id="refreshStockBtn">🔄 刷新</button>
+            </div>
+            <div id="stockList"></div>
+        </div>
+
+        <!-- 入仓记录面板 -->
+        <div id="inPanel" class="panel">
+            <div class="search-bar">
+                <input type="text" id="inSearch" placeholder="搜索规格/色号/机号/批号...">
+                <button class="btn" id="searchInBtn">🔍 搜索</button>
+                <button class="btn" id="refreshInBtn">📋 全部</button>
+            </div>
+            <div class="table-wrapper">
+                <table class="data-table">
+                    <thead><tr><th>标签ID</th><th>规格</th><th>色号</th><th>机号</th><th>数量</th><th>毛重</th><th>净重</th><th>批号</th><th>入仓日期</th></tr></thead>
+                    <tbody id="inTableBody"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- 出仓记录面板 -->
+        <div id="outPanel" class="panel">
+            <div class="search-bar">
+                <input type="text" id="outSearch" placeholder="搜索规格/色号/机号/批号...">
+                <button class="btn" id="searchOutBtn">🔍 搜索</button>
+                <button class="btn" id="refreshOutBtn">📋 全部</button>
+            </div>
+            <div class="table-wrapper">
+                <table class="data-table">
+                    <thead><tr><th>标签ID</th><th>规格</th><th>色号</th><th>机号</th><th>数量</th><th>净重</th><th>批号</th><th>出库日期</th></tr></thead>
+                    <tbody id="outTableBody"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 手动调整库存弹窗 -->
+<div id="adjustModal" class="modal">
+    <div class="modal-content">
+        <h3>手动调整库存</h3>
+        <input type="number" id="adjustQty" placeholder="输入调整数量(正数增加/负数减少)">
+        <div style="display:flex; gap:10px; justify-content:flex-end; margin-top:15px;">
+            <button class="btn" id="confirmAdjustBtn">确认</button>
+            <button class="btn btn-danger" id="cancelAdjustBtn">取消</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Supabase 配置
+    const SUPABASE_URL = 'https://tdhbzdnaieqcqzmbctlx.supabase.co';
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRkaGJ6ZG5haWVxY3F6bWJjdGx4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEyMTY4NDEsImV4cCI6MjA5Njc5Mjg0MX0.QSYPR37gOWNJkGIOEMwKsSa6mPkSFa5bXU_JSfxLWSM';
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    
+    let currentAdjustId = null;
+    
+    function showToast(msg) {
+        let div = document.createElement('div');
+        div.className = 'toast-msg';
+        div.innerText = msg;
+        document.body.appendChild(div);
+        setTimeout(() => div.remove(), 2000);
+    }
+    
+    function escapeHtml(str) {
+        if (!str) return '';
+        return String(str).replace(/[&<>]/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[m]));
+    }
+    
+    // 生成唯一ID
+    function generateTagId() {
+        let now = new Date();
+        let timestamp = now.getFullYear() +
+            String(now.getMonth() + 1).padStart(2, '0') +
+            String(now.getDate()).padStart(2, '0') +
+            String(now.getHours()).padStart(2, '0') +
+            String(now.getMinutes()).padStart(2, '0') +
+            String(now.getSeconds()).padStart(2, '0');
+        let random = String(Math.floor(Math.random() * 10000)).padStart(4, '0');
+        return `TAG${timestamp}${random}`;
+    }
+    
+    // 计算净重
+    function calcNet() {
+        let gross = parseFloat(document.getElementById('gross').value) || 0;
+        let tong = parseFloat(document.getElementById('tong').value) || 0;
+        let box = parseFloat(document.getElementById('box').value) || 0;
+        let net = gross - tong - box;
+        if (net < 0) net = 0;
+        document.getElementById('netDisplay').innerText = net.toFixed(2);
+        return net;
+    }
+    
+    document.getElementById('gross').addEventListener('input', calcNet);
+    document.getElementById('tong').addEventListener('input', calcNet);
+    document.getElementById('box').addEventListener('input', calcNet);
+    calcNet();
+    
+    // 打印标签
+    async function printLabel() {
+        const spec = document.getElementById('spec').value.trim();
+        const color = document.getElementById('color').value.trim() || '';
+        const machine = document.getElementById('machine').value.trim();
+        const qty = parseFloat(document.getElementById('qty').value);
+        const gross = parseFloat(document.getElementById('gross').value);
+        const tong = parseFloat(document.getElementById('tong').value) || 0;
+        const box = parseFloat(document.getElementById('box').value) || 0;
+        const handler = document.getElementById('handler').value.trim();
+        const batch = document.getElementById('batch').value.trim() || '';
+        
+        // 必填项验证
+        if (!spec) { showToast('请填写规格'); return; }
+        if (!machine) { showToast('请填写机号'); return; }
+        if (!qty || isNaN(qty)) { showToast('请填写数量'); return; }
+        if (!gross || isNaN(gross)) { showToast('请填写毛重'); return; }
+        if (!handler) { showToast('请填写包装'); return; }
+        
+        const net = gross - tong - box;
+        if (net <= 0) { showToast('净重计算错误，请检查毛重/筒重/箱重'); return; }
+        
+        const tagId = generateTagId();
+        const date = new Date().toISOString().slice(0, 10);
+        const printDate = new Date().toLocaleString('zh-CN');
+        const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=${encodeURIComponent(tagId)}`;
+        
+        // 构建标签HTML
+        const labelHtml = `
+            <div class="print-area">
+                <div class="label-print">
+                    <div class="company">中山市淮鸿橡筋织带有限公司</div>
+                    <div class="address">地址：中山市三角镇接民村金达路三号B栋五楼</div>
+                    <div class="address">电话：13535238522</div>
+                    <div class="top-line"></div>
+                    <div class="two-col">
+                        <div class="left-col">
+                            <div class="field"><span class="field-name">规格</span><span class="field-value">${escapeHtml(spec)}</span></div>
+                            <div class="field"><span class="field-name">机号</span><span class="field-value">${escapeHtml(machine)}</span></div>
+                            <div class="field"><span class="field-name">毛重</span><span class="field-value">${gross.toFixed(2)} kg</span></div>
+                            <div class="field"><span class="field-name">箱重</span><span class="field-value">${box.toFixed(2)} kg</span></div>
+                            <div class="field red"><span class="field-name">净重</span><span class="field-value">${net.toFixed(2)} kg</span></div>
+                        </div>
+                        <div class="right-col">
+                            <div class="field"><span class="field-name">色号</span><span class="field-value">${escapeHtml(color) || '-'}</span></div>
+                            <div class="field"><span class="field-name">数量</span><span class="field-value">${qty} 个</span></div>
+                            <div class="field"><span class="field-name">筒重</span><span class="field-value">${tong.toFixed(2)} kg</span></div>
+                            <div class="field"><span class="field-name">包装</span><span class="field-value">${escapeHtml(handler)}</span></div>
+                            <div class="field"><span class="field-name">批号</span><span class="field-value">${escapeHtml(batch) || '-'}</span></div>
+                        </div>
+                    </div>
+                    <div class="date-row">
+                        <span class="field-name">日期</span>
+                        <span class="field-value">${date}</span>
+                    </div>
+                    <div class="mid-line"></div>
+                    <div class="footer">不同机号、批号<br>分开使用</div>
+                    <div class="qr-area">
+                        <img class="qr-img" src="${qrUrl}" alt="二维码">
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        // 打印
+        const printWindow = window.open('', '_blank');
+        printWindow.document.write(`
+            <!DOCTYPE html>
+            <html>
+            <head><meta charset="UTF-8"><title>打印标签</title>
+            <style>
+                * { margin: 0; padding: 0; box-sizing: border-box; }
+                body { background: white; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+                .label-print { width: 100mm; height: 100mm; background: white; border: 1px solid #000; padding: 3mm; position: relative; font-family: 'SimSun', '宋体', monospace; }
+                .label-print .company, .label-print .address, .label-print .field-name, .label-print .field-value, .label-print .footer { font-weight: bold; }
+                .label-print .company { text-align: center; font-size: 19pt; font-weight: bold; }
+                .label-print .address { text-align: center; font-size: 11pt; line-height: 1.2; font-weight: bold; }
+                .label-print .top-line { border-top: 0.5px solid #000; margin: 2mm 0; }
+                .label-print .mid-line { border-top: 0.5px solid #000; margin: 4mm 0 2mm 0; }
+                .label-print .two-col { display: flex; justify-content: space-between; margin: 2mm 0 0 0; }
+                .label-print .left-col, .label-print .right-col { width: 45%; }
+                .label-print .field { margin-bottom: 2mm; display: flex; align-items: baseline; }
+                .label-print .field-name { width: 12mm; font-size: 13pt; font-weight: bold; }
+                .label-print .field-value { font-size: 13pt; padding-left: 2mm; font-weight: bold; }
+                .label-print .red .field-name, .label-print .red .field-value { color: #c00; font-weight: bold; }
+                .label-print .date-row { display: flex; align-items: baseline; margin-top: 2mm; width: 100%; }
+                .label-print .date-row .field-name { width: 12mm; font-size: 13pt; font-weight: bold; }
+                .label-print .date-row .field-value { flex: 1; font-size: 13pt; padding-left: 2mm; font-weight: bold; }
+                .label-print .footer { position: absolute; bottom: 8mm; left: 7mm; font-size: 16pt; font-weight: bold; color: #c00; line-height: 1.3; }
+                .label-print .qr-area { position: absolute; bottom: 3mm; right: 12mm; text-align: center; }
+                .label-print .qr-img { width: 24mm; height: 24mm; }
+                @page { size: 100mm 100mm; margin: 0mm; }
+                @media print { body { margin: 0; padding: 0; } .label-print { border: none; } }
+            </style>
+            </head>
+            <body>${labelHtml}</body>
+            </html>
+        `);
+        printWindow.document.close();
+        printWindow.focus();
+        printWindow.print();
+        
+        // 保存到数据库
+        const tagRecord = { tag_id: tagId, spec, color, machine, qty, gross, tong, box, net, handler, batch, date, status: '待出库', created_at: new Date().toISOString() };
+        const { error: tagError } = await supabase.from('tag_records').insert(tagRecord);
+        if (tagError) { showToast('保存失败: ' + tagError.message); return; }
+        
+        const inRecord = { unique_id: tagId, spec, color_no: color, machine_no: machine, quantity: qty, gross_weight: gross, tube_weight: tong, box_weight: box, package_type: handler, batch_no: batch, net_weight: net, in_date: printDate };
+        await supabase.from('in_records').insert(inRecord);
+        
+        // 更新库存
+        const { data: stockData } = await supabase.from('stock_records').select('*').eq('spec', spec).eq('color_no', color).eq('machine_no', machine).eq('batch_no', batch);
+        if (stockData && stockData.length > 0) {
+            await supabase.from('stock_records').update({ quantity: stockData[0].quantity + qty, net_weight: (stockData[0].net_weight || 0) + net }).eq('id', stockData[0].id);
+        } else {
+            await supabase.from('stock_records').insert({ spec, color_no: color, machine_no: machine, batch_no: batch, quantity: qty, net_weight: net });
+        }
+        
+        showToast('✅ 打印成功！标签ID: ' + tagId);
+        // 清空表单
+        document.getElementById('spec').value = '';
+        document.getElementById('machine').value = '';
+        document.getElementById('qty').value = '';
+        document.getElementById('gross').value = '';
+        document.getElementById('tong').value = '0';
+        document.getElementById('box').value = '0';
+        document.getElementById('handler').value = '';
+        document.getElementById('batch').value = '';
+        calcNet();
+    }
+    
+    document.getElementById('printBtn').onclick = printLabel;
+    
+    // 扫码出库
+    async function confirmOutstock() {
+        const tagId = document.getElementById('scanInput').value.trim();
+        if (!tagId) { showToast('请扫描二维码'); return; }
+        
+        const { data: tagData, error } = await supabase.from('tag_records').select('*').eq('tag_id', tagId).single();
+        if (error || !tagData) { showToast('未找到该标签对应的产品'); return; }
+        if (tagData.status === '已出库') { showToast('该产品已经出库，不可重复出库'); return; }
+        if (!confirm(`确认出库 ${tagData.net} kg 吗？`)) return;
+        
+        await supabase.from('tag_records').update({ status: '已出库', out_time: new Date().toISOString() }).eq('tag_id', tagId);
+        
+        const outRecord = { unique_id: tagId, spec: tagData.spec, color_no: tagData.color, machine_no: tagData.machine, quantity: tagData.qty, net_weight: tagData.net, batch_no: tagData.batch, out_date: new Date().toLocaleString('zh-CN') };
+        await supabase.from('out_records').insert(outRecord);
+        
+        const { data: stockData } = await supabase.from('stock_records').select('*').eq('spec', tagData.spec).eq('color_no', tagData.color || '').eq('machine_no', tagData.machine).eq('batch_no', tagData.batch || '');
+        if (stockData && stockData.length > 0) {
+            const newQty = stockData[0].quantity - tagData.qty;
+            if (newQty < 0) { showToast('库存不足，无法出库'); return; }
+            await supabase.from('stock_records').update({ quantity: newQty }).eq('id', stockData[0].id);
+        }
+        
+        showToast(`✅ 出库成功！${tagData.spec} ${tagData.net}kg`);
+        document.getElementById('scanInput').value = '';
+        loadStock();
+    }
+    
+    document.getElementById('confirmOutBtn').onclick = confirmOutstock;
+    
+    // 加载库存
+    async function loadStock() {
+        const { data, error } = await supabase.from('stock_records').select('*').order('spec');
+        if (error) { document.getElementById('stockList').innerHTML = '<p>加载失败</p>'; return; }
+        const searchVal = document.getElementById('stockSearch')?.value.toLowerCase() || '';
+        const filtered = (data || []).filter(item => 
+            item.spec.toLowerCase().includes(searchVal) || 
+            (item.machine_no || '').toLowerCase().includes(searchVal) ||
+            (item.batch_no || '').toLowerCase().includes(searchVal)
+        );
+        if (!filtered.length) { document.getElementById('stockList').innerHTML = '<p>暂无库存数据</p>'; return; }
+        document.getElementById('stockList').innerHTML = filtered.map(item => `
+            <div class="stock-item">
+                <div><strong>${escapeHtml(item.spec)}</strong> ${item.color_no ? '| 色号:' + escapeHtml(item.color_no) : ''} ${item.machine_no ? '| 机号:' + escapeHtml(item.machine_no) : ''} ${item.batch_no ? '| 批号:' + escapeHtml(item.batch_no) : ''}</div>
+                <div>📦 数量: ${item.quantity} | ⚖️ 净重: ${(item.net_weight || 0).toFixed(2)}kg</div>
+                <div><button class="btn btn-warning" style="padding:5px 12px;font-size:12px" onclick="openAdjustModal('${item.id}')">✏️ 手动调整</button></div>
+            </div>
+        `).join('');
+    }
+    
+    window.openAdjustModal = function(id) {
+        currentAdjustId = id;
+        document.getElementById('adjustModal').style.display = 'flex';
+        document.getElementById('adjustQty').value = '';
+    };
+    
+    async function adjustStock() {
+        const delta = parseFloat(document.getElementById('adjustQty').value);
+        if (isNaN(delta)) { showToast('请输入数字'); return; }
+        const { data: stock } = await supabase.from('stock_records').select('*').eq('id', currentAdjustId);
+        if (stock && stock.length > 0) {
+            const newQty = stock[0].quantity + delta;
+            if (newQty < 0) { showToast('库存不能为负数'); return; }
+            await supabase.from('stock_records').update({ quantity: newQty }).eq('id', currentAdjustId);
+            showToast('调整成功');
+            closeModal();
+            loadStock();
+        }
+    }
+    
+    function closeModal() { document.getElementById('adjustModal').style.display = 'none'; currentAdjustId = null; }
+    document.getElementById('confirmAdjustBtn').onclick = adjustStock;
+    document.getElementById('cancelAdjustBtn').onclick = closeModal;
+    document.getElementById('refreshStockBtn').onclick = loadStock;
+    document.getElementById('stockSearch').addEventListener('input', loadStock);
+    
+    // 入仓记录
+    async function loadInRecords() {
+        const { data, error } = await supabase.from('in_records').select('*').order('created_at', { ascending: false });
+        if (error) return;
+        const tbody = document.getElementById('inTableBody');
+        tbody.innerHTML = (data || []).map(r => `
+            <tr><td>${escapeHtml(r.unique_id || '-')}</td><td>${escapeHtml(r.spec || '-')}</td><td>${escapeHtml(r.color_no || '-')}</td><td>${escapeHtml(r.machine_no || '-')}</td><td>${r.quantity || '-'}</td><td>${r.gross_weight ? r.gross_weight + 'kg' : '-'}</td><td>${r.net_weight ? r.net_weight + 'kg' : '-'}</td><td>${escapeHtml(r.batch_no || '-')}</td><td>${r.in_date || '-'}</td></tr>
+        `).join('');
+        if (!data || data.length === 0) tbody.innerHTML = '<tr><td colspan="9" style="text-align:center">暂无入仓记录</td></tr>';
+    }
+    
+    async function searchInRecords() {
+        const keyword = document.getElementById('inSearch').value.trim();
+        if (!keyword) { loadInRecords(); return; }
+        const { data } = await supabase.from('in_records').select('*').or(`spec.ilike.%${keyword}%,color_no.ilike.%${keyword}%,machine_no.ilike.%${keyword}%,batch_no.ilike.%${keyword}%`);
+        const tbody = document.getElementById('inTableBody');
+        tbody.innerHTML = (data || []).map(r => `
+            <tr><td>${escapeHtml(r.unique_id || '-')}</td><td>${escapeHtml(r.spec || '-')}</td><td>${escapeHtml(r.color_no || '-')}</td><td>${escapeHtml(r.machine_no || '-')}</td><td>${r.quantity || '-'}</td><td>${r.gross_weight ? r.gross_weight + 'kg' : '-'}</td><td>${r.net_weight ? r.net_weight + 'kg' : '-'}</td><td>${escapeHtml(r.batch_no || '-')}</td><td>${r.in_date || '-'}</td></tr>
+        `).join('');
+    }
+    
+    // 出仓记录
+    async function loadOutRecords() {
+        const { data, error } = await supabase.from('out_records').select('*').order('created_at', { ascending: false });
+        if (error) return;
+        const tbody = document.getElementById('outTableBody');
+        tbody.innerHTML = (data || []).map(r => `
+            <tr><td>${escapeHtml(r.unique_id || '-')}</td><td>${escapeHtml(r.spec || '-')}</td><td>${escapeHtml(r.color_no || '-')}</td><td>${escapeHtml(r.machine_no || '-')}</td><td>${r.quantity || '-'}</td><td>${r.net_weight ? r.net_weight + 'kg' : '-'}</td><td>${escapeHtml(r.batch_no || '-')}</td><td>${r.out_date || '-'}</td></tr>
+        `).join('');
+        if (!data || data.length === 0) tbody.innerHTML = '<tr><td colspan="8" style="text-align:center">暂无出仓记录</td></tr>';
+    }
+    
+    async function searchOutRecords() {
+        const keyword = document.getElementById('outSearch').value.trim();
+        if (!keyword) { loadOutRecords(); return; }
+        const { data } = await supabase.from('out_records').select('*').or(`spec.ilike.%${keyword}%,color_no.ilike.%${keyword}%,machine_no.ilike.%${keyword}%,batch_no.ilike.%${keyword}%`);
+        const tbody = document.getElementById('outTableBody');
+        tbody.innerHTML = (data || []).map(r => `
+            <tr><td>${escapeHtml(r.unique_id || '-')}</td><td>${escapeHtml(r.spec || '-')}</td><td>${escapeHtml(r.color_no || '-')}</td><td>${escapeHtml(r.machine_no || '-')}</td><td>${r.quantity || '-'}</td><td>${r.net_weight ? r.net_weight + 'kg' : '-'}</td><td>${escapeHtml(r.batch_no || '-')}</td><td>${r.out_date || '-'}</td></tr>
+        `).join('');
+    }
+    
+    document.getElementById('searchInBtn').onclick = searchInRecords;
+    document.getElementById('refreshInBtn').onclick = loadInRecords;
+    document.getElementById('searchOutBtn').onclick = searchOutRecords;
+    document.getElementById('refreshOutBtn').onclick = loadOutRecords;
+    
+    // 选项卡切换
+    function switchTab(tab) {
+        document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+        document.getElementById(tab + 'Panel').classList.add('active');
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        document.querySelector(`.tab[data-tab="${tab}"]`).classList.add('active');
+        if (tab === 'stock') loadStock();
+        else if (tab === 'in') loadInRecords();
+        else if (tab === 'out') loadOutRecords();
+    }
+    
+    document.querySelectorAll('.tab').forEach(tab => {
+        tab.addEventListener('click', () => switchTab(tab.dataset.tab));
+    });
+    
+    // 初始化
+    calcNet();
+</script>
+</body>
+</html>
