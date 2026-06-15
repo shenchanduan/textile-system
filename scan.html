@@ -7,95 +7,20 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            background: #e9f0f5;
-            font-family: 'Segoe UI', 'SimSun', sans-serif;
-            padding: 20px;
-            min-height: 100vh;
-        }
-        .container {
-            max-width: 500px;
-            margin: 0 auto;
-            background: white;
-            border-radius: 24px;
-            padding: 24px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-        }
-        .title {
-            font-size: 22px;
-            font-weight: bold;
-            color: #1f6e8c;
-            text-align: center;
-            margin-bottom: 20px;
-            padding-bottom: 12px;
-            border-bottom: 2px solid #e2edf5;
-        }
-        .info-row {
-            display: flex;
-            padding: 12px 0;
-            border-bottom: 1px solid #f0f0f0;
-        }
-        .info-label {
-            width: 85px;
-            font-weight: bold;
-            color: #5e7e97;
-            font-size: 14px;
-        }
-        .info-value {
-            flex: 1;
-            font-weight: 500;
-            color: #333;
-            font-size: 14px;
-        }
-        .net-value {
-            color: #c00;
-            font-weight: bold;
-            font-size: 16px;
-        }
-        .status-badge {
-            display: inline-block;
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 12px;
-            margin-left: 10px;
-        }
-        .status-pending {
-            background: #fff3e0;
-            color: #e67e22;
-        }
-        .status-out {
-            background: #ffebee;
-            color: #c62828;
-        }
-        .btn {
-            width: 100%;
-            padding: 16px;
-            background: #2e7d32;
-            color: white;
-            border: none;
-            border-radius: 50px;
-            font-size: 18px;
-            font-weight: bold;
-            cursor: pointer;
-            margin-top: 20px;
-        }
-        .btn:active {
-            transform: scale(0.98);
-        }
-        .btn.disabled {
-            background: #ccc;
-            cursor: not-allowed;
-        }
-        .loading {
-            text-align: center;
-            padding: 40px;
-            color: #666;
-        }
-        .error {
-            color: #c62828;
-            text-align: center;
-            padding: 20px;
-        }
+        body { background: #e9f0f5; font-family: 'Segoe UI', sans-serif; padding: 20px; min-height: 100vh; }
+        .container { max-width: 500px; margin: 0 auto; background: white; border-radius: 24px; padding: 24px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); }
+        .title { font-size: 22px; font-weight: bold; color: #1f6e8c; text-align: center; margin-bottom: 20px; padding-bottom: 12px; border-bottom: 2px solid #e2edf5; }
+        .info-row { display: flex; padding: 12px 0; border-bottom: 1px solid #f0f0f0; }
+        .info-label { width: 85px; font-weight: bold; color: #5e7e97; font-size: 14px; }
+        .info-value { flex: 1; font-weight: 500; color: #333; font-size: 14px; }
+        .net-value { color: #c00; font-weight: bold; font-size: 16px; }
+        .status-badge { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 12px; margin-left: 10px; }
+        .status-pending { background: #fff3e0; color: #e67e22; }
+        .status-out { background: #ffebee; color: #c62828; }
+        .btn { width: 100%; padding: 16px; background: #2e7d32; color: white; border: none; border-radius: 50px; font-size: 18px; font-weight: bold; cursor: pointer; margin-top: 20px; }
+        .btn.disabled { background: #ccc; cursor: not-allowed; }
+        .loading { text-align: center; padding: 40px; color: #666; }
+        .error { color: #c62828; text-align: center; padding: 20px; }
     </style>
 </head>
 <body>
@@ -106,6 +31,11 @@
     const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRkaGJ6ZG5haWVxY3F6bWJjdGx4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEyMTY4NDEsImV4cCI6MjA5Njc5Mjg0MX0.QSYPR37gOWNJkGIOEMwKsSa6mPkSFa5bXU_JSfxLWSM';
     const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
     
+    function escapeHtml(str) {
+        if (!str) return '';
+        return String(str).replace(/[&<>]/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[m]));
+    }
+    
     async function load() {
         const urlParams = new URLSearchParams(window.location.search);
         const tagId = urlParams.get('id');
@@ -115,7 +45,6 @@
             return;
         }
         
-        // 查询产品信息
         const { data: tag, error } = await supabase.from('tag_records').select('*').eq('tag_id', tagId).single();
         
         if (error || !tag) {
@@ -170,14 +99,10 @@
                 } else {
                     alert('✅ 已转为待出库！请到电脑端库存管理页面批量确认出库。');
                     btn.innerText = '✓ 已转为待出库';
+                    btn.disabled = true;
                 }
             };
         }
-    }
-    
-    function escapeHtml(str) {
-        if (!str) return '';
-        return String(str).replace(/[&<>]/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[m]));
     }
     
     load();
