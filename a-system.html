@@ -111,7 +111,6 @@
                     <div class="tab ${currentTab === 'out' ? 'active' : ''}" data-tab="out">📤 出仓记录</div>
                 </div>
                 <div class="main-content">
-                    <!-- 打印标签 -->
                     <div id="printPanel" class="panel" style="display: ${currentTab === 'print' ? 'block' : 'none'}">
                         <div class="form-grid">
                             <div class="form-group"><label>规格 *</label><input type="text" id="spec" value="32S/2"></div>
@@ -131,7 +130,6 @@
                         </div>
                     </div>
                     
-                    <!-- PC扫码出库 -->
                     <div id="scanPanel" class="panel" style="display: ${currentTab === 'scan' ? 'block' : 'none'}">
                         <div class="form-group" style="max-width:400px">
                             <label>扫描二维码（扫码枪输入）</label>
@@ -143,7 +141,6 @@
                         </div>
                     </div>
                     
-                    <!-- 库存管理（含待出库） -->
                     <div id="stockPanel" class="panel" style="display: ${currentTab === 'stock' ? 'block' : 'none'}">
                         <div class="sub-tab-bar">
                             <div class="sub-tab ${currentSubTab === 'current' ? 'active' : ''}" data-subtab="current">📦 当前库存</div>
@@ -169,16 +166,14 @@
                         </div>
                     </div>
                     
-                    <!-- 入仓记录 -->
                     <div id="inPanel" class="panel" style="display: ${currentTab === 'in' ? 'block' : 'none'}">
                         <div class="search-bar"><input type="text" id="inSearch" placeholder="搜索..."><button class="btn" id="searchInBtn">搜索</button><button class="btn" id="refreshInBtn">全部</button></div>
                         <div class="table-wrapper"><table class="data-table"><thead><tr><th>标签ID</th><th>规格</th><th>色号</th><th>机号</th><th>数量</th><th>净重</th><th>批号</th><th>日期</th></tr></thead><tbody id="inTableBody"></tbody></table></div>
                     </div>
                     
-                    <!-- 出仓记录 -->
                     <div id="outPanel" class="panel" style="display: ${currentTab === 'out' ? 'block' : 'none'}">
                         <div class="search-bar"><input type="text" id="outSearch" placeholder="搜索..."><button class="btn" id="searchOutBtn">搜索</button><button class="btn" id="refreshOutBtn">全部</button></div>
-                        <div class="table-wrapper"><table class="data-table"><thead><tr><th>标签ID</th><th>规格</th><th>色号</th><th>机号</th><th>数量</th><th>净重</th><th>批号</th><th>日期</th></tr></thead><tbody id="outTableBody"></tbody></table></div>
+                        <div class="table-wrapper"><table class="data-table"><thead><tr><th>标签ID</th><th>规格</th><th>色号</th><th>机号</th><th>数量</th><th>净重</th><th>批号</th><th>日期</th></tr></thead><tbody id="outTableBody"></tbody>｜｜DSML｜｜</div>
                     </div>
                 </div>
             </div>
@@ -187,7 +182,6 @@
     }
     
     function bindEvents() {
-        // 净重计算
         function calcNet() {
             let gross = parseFloat(document.getElementById('gross')?.value) || 0;
             let tong = parseFloat(document.getElementById('tong')?.value) || 0;
@@ -205,7 +199,6 @@
             calcNet();
         }
         
-        // 打印标签
         const printBtn = document.getElementById('printBtn');
         if (printBtn) {
             printBtn.onclick = async () => {
@@ -230,10 +223,10 @@
                 const tagId = generateTagId();
                 const date = new Date().toISOString().slice(0,10);
                 const printDate = new Date().toLocaleString();
+                // 关键：二维码包含完整URL和参数
                 const scanUrl = `https://shenchanduan.github.io/textile-system/scan.html?id=${encodeURIComponent(tagId)}`;
                 const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=${encodeURIComponent(scanUrl)}`;
                 
-                // 保存到数据库
                 const { error: tagError } = await supabase.from('tag_records').insert({ 
                     tag_id: tagId, spec, color, machine, qty, gross, tong, box, net, 
                     handler, batch, date, status: '已入库', created_at: new Date().toISOString() 
@@ -246,7 +239,6 @@
                     package_type: handler, batch_no: batch, net_weight: net, in_date: printDate 
                 });
                 
-                // 更新库存
                 const { data: stockData } = await supabase.from('stock_records').select('*')
                     .eq('spec', spec).eq('color_no', color).eq('machine_no', machine).eq('batch_no', batch);
                 if (stockData && stockData.length > 0) {
@@ -261,7 +253,6 @@
                     });
                 }
                 
-                // 打印
                 const labelHtml = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>标签</title><style>
                     *{margin:0;padding:0;box-sizing:border-box}
                     body{background:white;display:flex;justify-content:center;align-items:center;min-height:100vh;font-family:'SimSun','宋体',monospace}
@@ -317,7 +308,6 @@
                 
                 showToast('✅ 打印成功！标签ID: ' + tagId);
                 
-                // 清空表单
                 document.getElementById('spec').value = '';
                 document.getElementById('machine').value = '';
                 document.getElementById('qty').value = '';
@@ -351,12 +341,11 @@
             };
         }
         
-        // 加载待出库列表
         async function loadPendingList() {
             const { data } = await supabase.from('tag_records').select('*').eq('status', '待出库').order('pending_time');
             const tbody = document.getElementById('pendingTableBody');
             if (!data || data.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="8" style="text-align:center">暂无待出库记录</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="8" style="text-align:center">暂无待出库记录</td></td>';
                 return;
             }
             tbody.innerHTML = data.map(item => `
@@ -380,7 +369,6 @@
             }
         }
         
-        // 批量出库
         const batchOutBtn = document.getElementById('batchOutBtn');
         if (batchOutBtn) {
             batchOutBtn.onclick = async () => {
@@ -413,7 +401,6 @@
             };
         }
         
-        // 加载库存
         async function loadStock() {
             const { data } = await supabase.from('stock_records').select('*').order('spec');
             const search = document.getElementById('stockSearch')?.value.toLowerCase() || '';
@@ -428,7 +415,6 @@
             `).join('');
         }
         
-        // 入仓记录
         async function loadInRecords() {
             const { data } = await supabase.from('in_records').select('*').order('created_at', { ascending: false });
             const tbody = document.getElementById('inTableBody');
@@ -446,7 +432,6 @@
             `).join('');
         }
         
-        // 出仓记录
         async function loadOutRecords() {
             const { data } = await supabase.from('out_records').select('*').order('created_at', { ascending: false });
             const tbody = document.getElementById('outTableBody');
@@ -464,7 +449,6 @@
             `).join('');
         }
         
-        // 搜索
         const searchInBtn = document.getElementById('searchInBtn');
         if (searchInBtn) {
             searchInBtn.onclick = async () => {
@@ -472,7 +456,7 @@
                 if (!kw) { loadInRecords(); return; }
                 const { data } = await supabase.from('in_records').select('*').or(`spec.ilike.%${kw}%,color_no.ilike.%${kw}%,machine_no.ilike.%${kw}%,batch_no.ilike.%${kw}%`);
                 const tbody = document.getElementById('inTableBody');
-                tbody.innerHTML = (data || []).map(r => `<tr><td colspan="8">${escapeHtml(r.spec)}</td></tr>`).join('');
+                tbody.innerHTML = (data || []).map(r => `</table><td colspan="8">${escapeHtml(r.spec)}</td></tr>`).join('');
             };
         }
         
@@ -486,7 +470,7 @@
                 if (!kw) { loadOutRecords(); return; }
                 const { data } = await supabase.from('out_records').select('*').or(`spec.ilike.%${kw}%,color_no.ilike.%${kw}%,machine_no.ilike.%${kw}%,batch_no.ilike.%${kw}%`);
                 const tbody = document.getElementById('outTableBody');
-                tbody.innerHTML = (data || []).map(r => `<td><td colspan="8">${escapeHtml(r.spec)}</td></tr>`).join('');
+                tbody.innerHTML = (data || []).map(r => `<tr><td colspan="8">${escapeHtml(r.spec)}</td></tr>`).join('');
             };
         }
         
@@ -499,7 +483,6 @@
         const stockSearch = document.getElementById('stockSearch');
         if (stockSearch) stockSearch.addEventListener('input', loadStock);
         
-        // 子选项卡切换
         document.querySelectorAll('.sub-tab').forEach(tab => {
             tab.addEventListener('click', () => {
                 currentSubTab = tab.dataset.subtab;
@@ -507,7 +490,6 @@
             });
         });
         
-        // 主选项卡切换
         document.querySelectorAll('.tab').forEach(tab => {
             tab.addEventListener('click', () => {
                 currentTab = tab.dataset.tab;
