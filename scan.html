@@ -3,108 +3,127 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>扫码出库确认</title>
+    <title>出库确认 - 纺织管理系统</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { background: #e9f0f5; font-family: 'Segoe UI', sans-serif; padding: 20px; min-height: 100vh; }
-        .container { max-width: 500px; margin: 0 auto; background: white; border-radius: 24px; padding: 24px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); }
-        .title { font-size: 22px; font-weight: bold; color: #1f6e8c; text-align: center; margin-bottom: 20px; padding-bottom: 12px; border-bottom: 2px solid #e2edf5; }
-        .info-row { display: flex; padding: 12px 0; border-bottom: 1px solid #f0f0f0; }
-        .info-label { width: 85px; font-weight: bold; color: #5e7e97; font-size: 14px; }
-        .info-value { flex: 1; font-weight: 500; color: #333; font-size: 14px; }
-        .net-value { color: #c00; font-weight: bold; font-size: 16px; }
-        .status-badge { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 12px; margin-left: 10px; }
-        .status-pending { background: #fff3e0; color: #e67e22; }
-        .status-out { background: #ffebee; color: #c62828; }
-        .btn { width: 100%; padding: 16px; background: #2e7d32; color: white; border: none; border-radius: 50px; font-size: 18px; font-weight: bold; cursor: pointer; margin-top: 20px; }
-        .btn.disabled { background: #ccc; cursor: not-allowed; }
-        .status-msg { text-align: center; padding: 20px; font-size: 16px; }
-        .status-success { color: #2e7d32; }
-        .status-error { color: #c62828; }
-        .loading { text-align: center; padding: 40px; color: #666; }
+        body { background: #e9f0f5; font-family: 'Segoe UI', sans-serif; padding: 20px; min-height: 100vh; display: flex; justify-content: center; align-items: center; }
+        .card { max-width: 500px; width: 100%; background: white; border-radius: 24px; padding: 24px; box-shadow: 0 8px 20px rgba(0,0,0,0.1); }
+        .loading { text-align: center; padding: 40px 20px; color: #5e7e97; }
+        .loading-spinner { width: 40px; height: 40px; border: 3px solid #e2edf5; border-top-color: #1f6e8c; border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 15px; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .error { background: #ffebee; color: #c62828; padding: 20px; border-radius: 16px; text-align: center; }
+        .info { background: #f0f6fa; padding: 16px; border-radius: 16px; margin: 20px 0; }
+        .info-item { display: flex; padding: 8px 0; border-bottom: 1px solid #e2edf5; }
+        .info-item:last-child { border-bottom: none; }
+        .info-label { width: 80px; font-weight: bold; color: #1f6e8c; }
+        .info-value { flex: 1; color: #2c3e50; }
+        .btn { width: 100%; background: #2e7d32; color: white; border: none; padding: 14px; border-radius: 12px; font-size: 16px; font-weight: bold; cursor: pointer; margin-top: 10px; }
+        .btn:active { transform: scale(0.98); }
+        .btn-disabled { background: #9e9e9e; cursor: not-allowed; }
+        h2 { text-align: center; color: #1f6e8c; margin-bottom: 10px; }
+        .subtitle { text-align: center; color: #7f8c8d; font-size: 13px; margin-bottom: 20px; }
     </style>
 </head>
 <body>
-<div id="app" class="container">⏳ 正在加载产品信息...</div>
+<div id="app" class="card">
+    <div class="loading">
+        <div class="loading-spinner"></div>
+        <p>加载中...</p>
+    </div>
+</div>
 
 <script>
-    const SUPABASE_URL = 'https://tdhbzdnaieqcqzmbctlx.supabase.co';
-    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRkaGJ6ZG5haWVxY3F6bWJjdGx4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEyMTY4NDEsImV4cCI6MjA5Njc5Mjg0MX0.QSYPR37gOWNJkGIOEMwKsSa6mPkSFa5bXU_JSfxLWSM';
-    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-    
-    function escapeHtml(str) {
-        if (!str) return '';
-        return String(str).replace(/[&<>]/g, function(m) {
-            if (m === '&') return '&amp;';
-            if (m === '<') return '&lt;';
-            if (m === '>') return '&gt;';
-            return m;
-        });
-    }
-    
-    async function load() {
+    (async function() {
+        const SUPABASE_URL = 'https://tdhbzdnaieqcqzmbctlx.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRkaGJ6ZG5haWVxY3F6bWJjdGx4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEyMTY4NDEsImV4cCI6MjA5Njc5Mjg0MX0.QSYPR37gOWNJkGIOEMwKsSa6mPkSFa5bXU_JSfxLWSM';
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        
         const app = document.getElementById('app');
+        
+        // 获取URL参数
         const urlParams = new URLSearchParams(window.location.search);
         const tagId = urlParams.get('id');
         
-        // 检查是否有参数
+        // 如果没有tagId，显示错误
         if (!tagId) {
-            app.innerHTML = '<div class="status-msg status-error">❌ 加载失败：二维码无效，缺少产品ID</div>';
+            app.innerHTML = `
+                <div class="error">
+                    <h3>❌ 无效的二维码</h3>
+                    <p>缺少产品标识码</p>
+                    <p style="font-size:12px; margin-top:15px; word-break:break-all;">当前URL: ${window.location.href}</p>
+                </div>
+            `;
             return;
         }
         
-        // 查询数据库
-        const { data: tag, error } = await supabase.from('tag_records').select('*').eq('tag_id', tagId).single();
-        
-        // 查询失败
-        if (error) {
-            app.innerHTML = '<div class="status-msg status-error">❌ 加载失败：' + error.message + '</div>';
-            return;
-        }
-        
-        // 未找到产品
-        if (!tag) {
-            app.innerHTML = '<div class="status-msg status-error">❌ 加载失败：未找到产品，标签ID: ' + escapeHtml(tagId) + '</div>';
-            return;
-        }
-        
-        // ✅ 加载成功，显示产品信息和出库按钮
-        let statusHtml = '';
-        let btnDisabled = false;
-        let btnText = '📤 确认出库';
-        
-        if (tag.status === '已出库') {
-            statusHtml = '<span class="status-badge status-out">✅ 已出库</span>';
-            btnDisabled = true;
-            btnText = '✓ 已出库';
-        } else if (tag.status === '待出库') {
-            statusHtml = '<span class="status-badge status-pending">⏳ 待出库</span>';
-            btnDisabled = true;
-            btnText = '⏳ 已在待出库列表';
-        }
-        
-        app.innerHTML = `
-            <div class="title">📦 产品信息 ${statusHtml}</div>
-            <div class="info-row"><div class="info-label">标签ID</div><div class="info-value">${escapeHtml(tag.tag_id)}</div></div>
-            <div class="info-row"><div class="info-label">规格</div><div class="info-value">${escapeHtml(tag.spec)}</div></div>
-            <div class="info-row"><div class="info-label">色号</div><div class="info-value">${escapeHtml(tag.color || '-')}</div></div>
-            <div class="info-row"><div class="info-label">机号</div><div class="info-value">${escapeHtml(tag.machine)}</div></div>
-            <div class="info-row"><div class="info-label">数量</div><div class="info-value">${tag.qty} 个</div></div>
-            <div class="info-row"><div class="info-label">毛重</div><div class="info-value">${tag.gross} kg</div></div>
-            <div class="info-row"><div class="info-label">净重</div><div class="info-value net-value">${tag.net} kg</div></div>
-            <div class="info-row"><div class="info-label">打包</div><div class="info-value">${escapeHtml(tag.handler || '-')}</div></div>
-            <div class="info-row"><div class="info-label">批号</div><div class="info-value">${escapeHtml(tag.batch || '-')}</div></div>
-            <div class="info-row"><div class="info-label">生产日期</div><div class="info-value">${tag.date}</div></div>
-            <button id="outBtn" class="btn ${btnDisabled ? 'disabled' : ''}" ${btnDisabled ? 'disabled' : ''}>${btnText}</button>
-        `;
-        
-        // 绑定出库按钮事件
-        if (!btnDisabled) {
-            document.getElementById('outBtn').onclick = async () => {
-                const btn = document.getElementById('outBtn');
+        try {
+            // 查询产品信息
+            const { data, error } = await supabase
+                .from('tag_records')
+                .select('*')
+                .eq('tag_id', tagId);
+            
+            if (error) {
+                throw new Error(error.message);
+            }
+            
+            if (!data || data.length === 0) {
+                app.innerHTML = `
+                    <div class="error">
+                        <h3>❌ 未找到产品</h3>
+                        <p>标签ID: ${escapeHtml(tagId)}</p>
+                        <p>请确认二维码是否正确</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            const product = data[0];
+            
+            // 检查状态
+            if (product.status === '已出库') {
+                app.innerHTML = `
+                    <div class="error">
+                        <h3>✅ 该产品已出库</h3>
+                        <p>出库时间: ${product.out_time ? new Date(product.out_time).toLocaleString() : '未知'}</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            if (product.status === '待出库') {
+                app.innerHTML = `
+                    <div class="error">
+                        <h3>⏳ 该产品已在待出库列表</h3>
+                        <p>请勿重复操作，等待管理员确认出库</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            // 显示产品信息
+            app.innerHTML = `
+                <h2>📦 产品出库确认</h2>
+                <div class="subtitle">请核对产品信息</div>
+                <div class="info">
+                    <div class="info-item"><span class="info-label">标签ID</span><span class="info-value">${escapeHtml(product.tag_id)}</span></div>
+                    <div class="info-item"><span class="info-label">规格</span><span class="info-value">${escapeHtml(product.spec)}</span></div>
+                    <div class="info-item"><span class="info-label">色号</span><span class="info-value">${escapeHtml(product.color || '-')}</span></div>
+                    <div class="info-item"><span class="info-label">机号</span><span class="info-value">${escapeHtml(product.machine)}</span></div>
+                    <div class="info-item"><span class="info-label">数量</span><span class="info-value">${product.qty} 个</span></div>
+                    <div class="info-item"><span class="info-label">净重</span><span class="info-value">${product.net} kg</span></div>
+                    <div class="info-item"><span class="info-label">打包</span><span class="info-value">${escapeHtml(product.handler || '-')}</span></div>
+                    <div class="info-item"><span class="info-label">批号</span><span class="info-value">${escapeHtml(product.batch || '-')}</span></div>
+                    <div class="info-item"><span class="info-label">入仓日期</span><span class="info-value">${product.date || '-'}</span></div>
+                </div>
+                <button class="btn" id="confirmBtn">✅ 确认出库</button>
+            `;
+            
+            document.getElementById('confirmBtn').onclick = async () => {
+                const btn = document.getElementById('confirmBtn');
                 btn.disabled = true;
-                btn.innerText = '处理中...';
+                btn.textContent = '⏳ 处理中...';
                 
                 const { error: updateError } = await supabase
                     .from('tag_records')
@@ -112,19 +131,36 @@
                     .eq('tag_id', tagId);
                 
                 if (updateError) {
-                    alert('操作失败：' + updateError.message);
+                    alert('出库失败：' + updateError.message);
                     btn.disabled = false;
-                    btn.innerText = '📤 确认出库';
+                    btn.textContent = '✅ 确认出库';
                 } else {
-                    alert('✅ 已转为待出库！请到电脑端库存管理页面批量确认出库。');
-                    btn.innerText = '✓ 已转为待出库';
-                    btn.disabled = true;
+                    app.innerHTML = `
+                        <div style="text-align:center; padding:30px;">
+                            <div style="font-size:48px; margin-bottom:15px;">✅</div>
+                            <h3 style="color:#2e7d32;">操作成功！</h3>
+                            <p>产品已转为待出库状态</p>
+                            <p style="color:#7f8c8d; font-size:12px; margin-top:20px;">页面将在3秒后关闭</p>
+                        </div>
+                    `;
+                    setTimeout(() => window.close(), 3000);
                 }
             };
+            
+        } catch (err) {
+            app.innerHTML = `
+                <div class="error">
+                    <h3>❌ 系统错误</h3>
+                    <p>${escapeHtml(err.message)}</p>
+                </div>
+            `;
         }
-    }
-    
-    load();
+        
+        function escapeHtml(str) {
+            if (!str) return '';
+            return String(str).replace(/[&<>]/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[m]));
+        }
+    })();
 </script>
 </body>
 </html>
