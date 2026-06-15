@@ -2,110 +2,64 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>扫码出库确认</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>扫码调试</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { background: #e9f0f5; font-family: 'Segoe UI', sans-serif; padding: 20px; min-height: 100vh; }
-        .container { max-width: 500px; margin: 0 auto; background: white; border-radius: 24px; padding: 24px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); }
-        .title { font-size: 22px; font-weight: bold; color: #1f6e8c; text-align: center; margin-bottom: 20px; padding-bottom: 12px; border-bottom: 2px solid #e2edf5; }
-        .info-row { display: flex; padding: 12px 0; border-bottom: 1px solid #f0f0f0; }
-        .info-label { width: 85px; font-weight: bold; color: #5e7e97; font-size: 14px; }
-        .info-value { flex: 1; font-weight: 500; color: #333; font-size: 14px; }
-        .net-value { color: #c00; font-weight: bold; font-size: 16px; }
-        .status-badge { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 12px; margin-left: 10px; }
-        .status-pending { background: #fff3e0; color: #e67e22; }
-        .status-out { background: #ffebee; color: #c62828; }
-        .btn { width: 100%; padding: 16px; background: #2e7d32; color: white; border: none; border-radius: 50px; font-size: 18px; font-weight: bold; cursor: pointer; margin-top: 20px; }
-        .btn.disabled { background: #ccc; cursor: not-allowed; }
-        .loading { text-align: center; padding: 40px; color: #666; }
-        .error { color: #c62828; text-align: center; padding: 20px; }
-    </style>
 </head>
 <body>
-<div id="app" class="container">加载中...</div>
+<div id="app" style="padding:20px; font-family:monospace; white-space:pre-wrap;"></div>
 
 <script>
-    const SUPABASE_URL = 'https://tdhbzdnaieqcqzmbctlx.supabase.co';
-    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRkaGJ6ZG5haWVxY3F6bWJjdGx4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEyMTY4NDEsImV4cCI6MjA5Njc5Mjg0MX0.QSYPR37gOWNJkGIOEMwKsSa6mPkSFa5bXU_JSfxLWSM';
-    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-    
-    function escapeHtml(str) {
-        if (!str) return '';
-        return String(str).replace(/[&<>]/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[m]));
-    }
-    
-    async function load() {
+    (async function() {
+        const app = document.getElementById('app');
+        
+        // 配置
+        const SUPABASE_URL = 'https://tdhbzdnaieqcqzmbctlx.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRkaGJ6ZG5haWVxY3F6bWJjdGx4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEyMTY4NDEsImV4cCI6MjA5Njc5Mjg0MX0.QSYPR37gOWNJkGIOEMwKsSa6mPkSFa5bXU_JSfxLWSM';
+        
+        app.innerHTML = '1. 初始化 Supabase...\n';
+        
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        
+        app.innerHTML += '2. 获取URL参数...\n';
         const urlParams = new URLSearchParams(window.location.search);
         const tagId = urlParams.get('id');
         
+        app.innerHTML += '3. 参数值: ' + (tagId || '无') + '\n';
+        
         if (!tagId) {
-            document.getElementById('app').innerHTML = '<div class="error">❌ 无效的二维码</div>';
+            app.innerHTML += '❌ 没有id参数';
             return;
         }
         
-        const { data: tag, error } = await supabase.from('tag_records').select('*').eq('tag_id', tagId).single();
+        app.innerHTML += '4. 开始查询数据库...\n';
         
-        if (error || !tag) {
-            document.getElementById('app').innerHTML = '<div class="error">❌ 未找到产品信息</div>';
-            return;
+        try {
+            const { data, error } = await supabase
+                .from('tag_records')
+                .select('*')
+                .eq('tag_id', tagId);
+            
+            app.innerHTML += '5. 查询完成\n';
+            app.innerHTML += 'error: ' + JSON.stringify(error, null, 2) + '\n';
+            app.innerHTML += 'data: ' + JSON.stringify(data, null, 2) + '\n';
+            
+            if (error) {
+                app.innerHTML += '❌ 查询错误: ' + error.message;
+                return;
+            }
+            
+            if (!data || data.length === 0) {
+                app.innerHTML += '❌ 未找到产品';
+                return;
+            }
+            
+            app.innerHTML += '✅ 找到产品: ' + data[0].spec;
+            
+        } catch (err) {
+            app.innerHTML += '❌ 异常: ' + err.message;
         }
-        
-        let statusHtml = '';
-        let btnDisabled = false;
-        let btnText = '📤 确认出库';
-        
-        if (tag.status === '已出库') {
-            statusHtml = '<span class="status-badge status-out">✅ 已出库</span>';
-            btnDisabled = true;
-            btnText = '✓ 已出库';
-        } else if (tag.status === '待出库') {
-            statusHtml = '<span class="status-badge status-pending">⏳ 待出库</span>';
-            btnDisabled = true;
-            btnText = '⏳ 已在待出库列表';
-        }
-        
-        document.getElementById('app').innerHTML = `
-            <div class="title">📦 产品信息 ${statusHtml}</div>
-            <div class="info-row"><div class="info-label">标签ID</div><div class="info-value">${escapeHtml(tag.tag_id)}</div></div>
-            <div class="info-row"><div class="info-label">规格</div><div class="info-value">${escapeHtml(tag.spec)}</div></div>
-            <div class="info-row"><div class="info-label">色号</div><div class="info-value">${escapeHtml(tag.color || '-')}</div></div>
-            <div class="info-row"><div class="info-label">机号</div><div class="info-value">${escapeHtml(tag.machine)}</div></div>
-            <div class="info-row"><div class="info-label">数量</div><div class="info-value">${tag.qty} 个</div></div>
-            <div class="info-row"><div class="info-label">毛重</div><div class="info-value">${tag.gross} kg</div></div>
-            <div class="info-row"><div class="info-label">净重</div><div class="info-value net-value">${tag.net} kg</div></div>
-            <div class="info-row"><div class="info-label">打包</div><div class="info-value">${escapeHtml(tag.handler || '-')}</div></div>
-            <div class="info-row"><div class="info-label">批号</div><div class="info-value">${escapeHtml(tag.batch || '-')}</div></div>
-            <div class="info-row"><div class="info-label">生产日期</div><div class="info-value">${tag.date}</div></div>
-            <button id="outBtn" class="btn ${btnDisabled ? 'disabled' : ''}" ${btnDisabled ? 'disabled' : ''}>${btnText}</button>
-        `;
-        
-        if (!btnDisabled) {
-            document.getElementById('outBtn').onclick = async () => {
-                const btn = document.getElementById('outBtn');
-                btn.disabled = true;
-                btn.innerText = '处理中...';
-                
-                const { error: updateError } = await supabase
-                    .from('tag_records')
-                    .update({ status: '待出库', pending_time: new Date().toISOString() })
-                    .eq('tag_id', tagId);
-                
-                if (updateError) {
-                    alert('操作失败：' + updateError.message);
-                    btn.disabled = false;
-                    btn.innerText = '📤 确认出库';
-                } else {
-                    alert('✅ 已转为待出库！请到电脑端库存管理页面批量确认出库。');
-                    btn.innerText = '✓ 已转为待出库';
-                    btn.disabled = true;
-                }
-            };
-        }
-    }
-    
-    load();
+    })();
 </script>
 </body>
 </html>
