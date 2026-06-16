@@ -27,7 +27,8 @@
         .form-group input { padding: 8px 10px; border: 1px solid #ddd; border-radius: 6px; }
         .btn { background: #1f6e8c; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: bold; }
         .btn-success { background: #2e7d32; }
-        .btn-warning { background: #e67e22; }
+        .btn-danger { background: #c62828; }
+        .btn-sm { padding: 4px 10px; font-size: 12px; }
         .net-weight-display { background: #e8f5e9; padding: 8px 12px; border-radius: 6px; font-weight: bold; margin-bottom: 15px; }
         .table-wrapper { overflow-x: auto; margin-top: 15px; border: 1px solid #e2edf5; border-radius: 12px; }
         .data-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
@@ -36,11 +37,14 @@
         .search-bar { display: flex; gap: 10px; margin-bottom: 15px; }
         .search-bar input { flex: 1; padding: 8px 12px; border: 1px solid #ddd; border-radius: 20px; }
         .stock-item { background: #f8f9fa; padding: 12px; margin-bottom: 10px; border-radius: 8px; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 10px; }
+        .pending-summary { background: #fff3e0; padding: 12px 16px; border-radius: 12px; margin-bottom: 16px; display: flex; flex-wrap: wrap; gap: 20px; border-left: 4px solid #ff9800; }
+        .pending-summary-item { font-size: 14px; }
+        .pending-summary-item strong { color: #e65100; }
+        .batch-bar { margin: 15px 0; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
         .label-print { width: 100mm; height: 100mm; background: white; border: 1px solid #000; padding: 3mm; position: relative; font-family: 'SimSun', '宋体', monospace; margin: 0 auto; }
         .label-print .company { text-align: center; font-size: 19pt; font-weight: bold; }
         .label-print .address { text-align: center; font-size: 11pt; line-height: 1.2; font-weight: bold; }
         .label-print .top-line { border-top: 0.5px solid #000; margin: 2mm 0; }
-        .label-print .mid-line { border-top: 0.5px solid #000; margin: 4mm 0 2mm 0; }
         .label-print .two-col { display: flex; justify-content: space-between; margin: 2mm 0 0; }
         .label-print .left-col, .label-print .right-col { width: 45%; }
         .label-print .field { margin-bottom: 2mm; display: flex; align-items: baseline; }
@@ -59,7 +63,8 @@
         @keyframes fadeOut { 0% { opacity: 1; } 70% { opacity: 1; } 100% { opacity: 0; visibility: hidden; } }
         .print-iframe { position: absolute; width: 0; height: 0; border: none; visibility: hidden; }
         .pending-checkbox { transform: scale(1.2); cursor: pointer; }
-        .batch-bar { margin: 15px 0; display: flex; justify-content: space-between; align-items: center; }
+        .repair-area { margin-top: 20px; padding: 16px; background: #f5f5f5; border-radius: 12px; border: 1px dashed #aaa; }
+        .repair-title { font-weight: bold; margin-bottom: 12px; color: #1f6e8c; }
     </style>
 </head>
 <body>
@@ -96,12 +101,159 @@
         return 'TAG' + ts + random;
     }
     
+    // 导出CSV
+    function exportToCSV(data, filename, columns) {
+        let csvRows = [columns.map(c => c.title).join(',')];
+        for (let row of data) {
+            let values = columns.map(col => {
+                let val = row[col.key] || '';
+                if (typeof val === 'string' && (val.includes(',') || val.includes('"'))) {
+                    val = `"${val.replace(/"/g, '""')}"`;
+                }
+                return val;
+            });
+            csvRows.push(values.join(','));
+        }
+        let blob = new Blob(['\uFEFF' + csvRows.join('\n')], { type: 'text/csv;charset=utf-8;' });
+        let link = document.createElement('a');
+        let url = URL.createObjectURL(blob);
+        link.href = url;
+        link.setAttribute('download', filename);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+    }
+    
+    // 打印标签函数
+    async function printLabel(tagId, data) {
+        const scanUrl = `https://shenchanduan.github.io/textile-system/scan.html?id=${encodeURIComponent(tagId)}`;
+        const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=${encodeURIComponent(scanUrl)}`;
+        const date = new Date().toISOString().slice(0,10);
+        
+        const labelHtml = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>标签</title><style>
+            *{margin:0;padding:0;box-sizing:border-box}
+            body{background:white;display:flex;justify-content:center;align-items:center;min-height:100vh;font-family:'SimSun','宋体',monospace}
+            .label{width:100mm;height:100mm;border:1px solid #000;padding:3mm;position:relative;margin:0 auto}
+            .company{text-align:center;font-size:19pt;font-weight:bold}
+            .address{text-align:center;font-size:11pt;line-height:1.2;font-weight:bold}
+            .top-line{border-top:0.5px solid #000;margin:2mm 0}
+            .two-col{display:flex;justify-content:space-between;margin:2mm 0 0}
+            .left-col,.right-col{width:45%}
+            .field{margin-bottom:2mm;display:flex}
+            .field-name{width:12mm;font-size:13pt;font-weight:bold}
+            .field-value{font-size:13pt;padding-left:2mm;font-weight:bold}
+            .red .field-name,.red .field-value{color:#c00}
+            .date-row{display:flex;margin-top:2mm}
+            .date-row .field-name{width:12mm;font-size:13pt;font-weight:bold}
+            .date-row .field-value{font-size:13pt;font-weight:bold}
+            .footer{position:absolute;bottom:8mm;left:7mm;font-size:16pt;font-weight:bold;color:#c00}
+            .qr-area{position:absolute;bottom:3mm;right:12mm}
+            .qr-img{width:24mm;height:24mm}
+            @page{size:100mm 100mm;margin:0}
+            @media print{body{margin:0;padding:0}.label{border:none}}
+        </style></head><body>
+        <div class="label">
+            <div class="company">中山市淮鸿橡筋织带有限公司</div>
+            <div class="address">地址：中山市三角镇接民村金达路三号B栋五楼</div>
+            <div class="address">电话：13535238522</div>
+            <div class="top-line"></div>
+            <div class="two-col">
+                <div class="left-col">
+                    <div class="field"><span class="field-name">规格</span><span class="field-value">${escapeHtml(data.spec)}</span></div>
+                    <div class="field"><span class="field-name">机号</span><span class="field-value">${escapeHtml(data.machine)}</span></div>
+                    <div class="field"><span class="field-name">毛重</span><span class="field-value">${data.gross.toFixed(2)}kg</span></div>
+                    <div class="field"><span class="field-name">箱重</span><span class="field-value">${data.box.toFixed(2)}kg</span></div>
+                    <div class="field red"><span class="field-name">净重</span><span class="field-value">${data.net.toFixed(2)}kg</span></div>
+                </div>
+                <div class="right-col">
+                    <div class="field"><span class="field-name">色号</span><span class="field-value">${escapeHtml(data.color) || '-'}</span></div>
+                    <div class="field"><span class="field-name">数量</span><span class="field-value">${data.qty}个</span></div>
+                    <div class="field"><span class="field-name">筒重</span><span class="field-value">${data.tong.toFixed(2)}kg</span></div>
+                    <div class="field"><span class="field-name">打包</span><span class="field-value">${escapeHtml(data.handler)}</span></div>
+                    <div class="field"><span class="field-name">批号</span><span class="field-value">${escapeHtml(data.batch) || '-'}</span></div>
+                </div>
+            </div>
+            <div class="date-row"><span class="field-name">日期</span><span class="field-value">${date}</span></div>
+            <div class="footer">不同机号、批号<br>分开使用</div>
+            <div class="qr-area"><img class="qr-img" src="${qrUrl}"></div>
+        </div>
+        </body></html>`;
+        
+        const printFrame = document.getElementById('printFrame');
+        printFrame.srcdoc = labelHtml;
+        setTimeout(() => printFrame.contentWindow.print(), 100);
+    }
+    
+    // 更新库存（按规格+色号+批号合并，忽略机号）
+    async function updateStock(spec, color, batch, deltaQty, deltaNet) {
+        const { data: stock } = await supabase.from('stock_records')
+            .select('*')
+            .eq('spec', spec)
+            .eq('color_no', color || '')
+            .eq('batch_no', batch || '');
+        
+        if (stock && stock.length > 0) {
+            const newQty = (stock[0].quantity || 0) + deltaQty;
+            const newNet = (stock[0].net_weight || 0) + deltaNet;
+            if (newQty <= 0) {
+                await supabase.from('stock_records').delete().eq('id', stock[0].id);
+            } else {
+                await supabase.from('stock_records').update({ quantity: newQty, net_weight: newNet }).eq('id', stock[0].id);
+            }
+        } else if (deltaQty > 0) {
+            await supabase.from('stock_records').insert({ spec, color_no: color || '', batch_no: batch || '', quantity: deltaQty, net_weight: deltaNet });
+        }
+    }
+    
+    // 删除入仓记录
+    async function deleteInRecord(uniqueId) {
+        if (!confirm('确定删除此入仓记录吗？将同步删除标签并回滚库存！')) return;
+        
+        // 获取tag记录
+        const { data: tag } = await supabase.from('tag_records').select('*').eq('tag_id', uniqueId).single();
+        if (!tag) { showToast('记录不存在'); return; }
+        if (tag.status !== '已入库') { showToast('只能删除已入库状态的记录'); return; }
+        
+        // 删除in_records
+        await supabase.from('in_records').delete().eq('unique_id', uniqueId);
+        // 删除tag_records
+        await supabase.from('tag_records').delete().eq('tag_id', uniqueId);
+        // 更新库存（减掉）
+        await updateStock(tag.spec, tag.color, tag.batch, -tag.qty, -tag.net);
+        
+        showToast('✅ 已删除并回滚库存');
+        loadInRecords();
+        loadStock();
+    }
+    
+    // 补打标签
+    async function reprintTag(tagId) {
+        const { data: tag } = await supabase.from('tag_records').select('*').eq('tag_id', tagId).single();
+        if (!tag) { showToast('未找到标签记录'); return false; }
+        
+        await printLabel(tagId, {
+            spec: tag.spec,
+            color: tag.color,
+            machine: tag.machine,
+            qty: tag.qty,
+            gross: tag.gross,
+            tong: tag.tong,
+            box: tag.box,
+            net: tag.net,
+            handler: tag.handler,
+            batch: tag.batch
+        });
+        showToast(`🖨️ 补打标签: ${tagId}`);
+        return true;
+    }
+    
     function render() {
         document.getElementById('app').innerHTML = `
             <div class="container">
                 <div class="header">
-                    <h1>🏭 纺织生产端管理系统 <span style="font-size:0.7rem; background:#e8f5e9; padding:2px 8px; border-radius:20px;">A系统</span></h1>
-                    <p>打印标签 | 库存管理 | 入仓记录 | 出仓记录</p>
+                    <h1>🏭 纺织生产端管理系统</h1>
+                    <p>打印标签 | 扫码出库 | 库存管理 | 入仓记录 | 出仓记录</p>
                 </div>
                 <div class="tab-bar">
                     <div class="tab ${currentTab === 'print' ? 'active' : ''}" data-tab="print">🖨️ 打印标签</div>
@@ -111,69 +263,77 @@
                     <div class="tab ${currentTab === 'out' ? 'active' : ''}" data-tab="out">📤 出仓记录</div>
                 </div>
                 <div class="main-content">
+                    <!-- 打印标签面板 -->
                     <div id="printPanel" class="panel" style="display: ${currentTab === 'print' ? 'block' : 'none'}">
                         <div class="form-grid">
                             <div class="form-group"><label>规格 *</label><input type="text" id="spec" value="32S/2"></div>
-                            <div class="form-group"><label>色号 <span style="font-weight:normal;color:#999;">(可选)</span></label><input type="text" id="color" value="深灰"></div>
+                            <div class="form-group"><label>色号</label><input type="text" id="color" value="深灰"></div>
                             <div class="form-group"><label>机号 *</label><input type="text" id="machine" value="8#"></div>
                             <div class="form-group"><label>数量 *</label><input type="number" id="qty" value="120"></div>
                             <div class="form-group"><label>毛重(kg) *</label><input type="number" step="0.01" id="gross" value="62.30"></div>
                             <div class="form-group"><label>筒重(kg) *</label><input type="number" step="0.01" id="tong" value="2.20"></div>
                             <div class="form-group"><label>箱重(kg) *</label><input type="number" step="0.01" id="box" value="3.10"></div>
                             <div class="form-group"><label>打包 *</label><input type="text" id="handler" value="李芳"></div>
-                            <div class="form-group"><label>批号 <span style="font-weight:normal;color:#999;">(可选)</span></label><input type="text" id="batch" value="B20240601"></div>
+                            <div class="form-group"><label>批号</label><input type="text" id="batch" value="B20240601"></div>
                         </div>
                         <div class="net-weight-display">⚖️ 净重：<span id="netDisplay">0.00</span> kg (毛重-筒重-箱重)</div>
                         <button class="btn btn-success" id="printBtn">🖨️ 打印标签并入仓</button>
-                        <div style="margin-top:15px; padding:12px; background:#f0f6fa; border-radius:12px;">
-                            <p>📱 手机扫码：打印后扫描二维码，会打开确认出库页面</p>
+                        
+                        <div class="repair-area">
+                            <div class="repair-title">🔄 补打损坏标签</div>
+                            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                                <input type="text" id="repairTagId" placeholder="输入或扫描原标签ID..." style="flex:2; padding: 10px; border-radius: 8px; border: 1px solid #ddd;">
+                                <button class="btn" id="searchAndReprintBtn">🔍 查询并补打</button>
+                            </div>
+                            <p style="font-size: 12px; color: #666; margin-top: 10px;">💡 提示：扫码枪扫损坏标签自动填入ID，或从下方入仓记录点击"补打"</p>
                         </div>
                     </div>
                     
+                    <!-- 扫码出库面板 -->
                     <div id="scanPanel" class="panel" style="display: ${currentTab === 'scan' ? 'block' : 'none'}">
                         <div class="form-group" style="max-width:400px">
                             <label>扫描二维码（扫码枪输入）</label>
                             <input type="text" id="scanInput" placeholder="扫描或输入标签ID..." style="padding:12px;font-size:16px">
                         </div>
                         <button class="btn btn-success" id="pcConfirmBtn" style="margin-top:15px;">✅ 转为待出库</button>
-                        <div style="margin-top:20px; padding:12px; background:#f0f6fa; border-radius:12px;">
-                            <p>📱 手机用户：用手机相机扫描标签上的二维码，会自动打开确认出库页面</p>
-                        </div>
                     </div>
                     
+                    <!-- 库存管理面板 -->
                     <div id="stockPanel" class="panel" style="display: ${currentTab === 'stock' ? 'block' : 'none'}">
                         <div class="sub-tab-bar">
                             <div class="sub-tab ${currentSubTab === 'current' ? 'active' : ''}" data-subtab="current">📦 当前库存</div>
                             <div class="sub-tab ${currentSubTab === 'pending' ? 'active' : ''}" data-subtab="pending">⏳ 待出库列表</div>
                         </div>
                         <div id="currentStockPanel" style="display: ${currentSubTab === 'current' ? 'block' : 'none'}">
-                            <div class="search-bar"><input type="text" id="stockSearch" placeholder="搜索规格/色号/机号..."><button class="btn" id="refreshStockBtn">刷新</button></div>
+                            <div class="search-bar"><input type="text" id="stockSearch" placeholder="搜索规格/色号/批号..."><button class="btn" id="refreshStockBtn">刷新</button></div>
                             <div id="stockList"></div>
                         </div>
                         <div id="pendingStockPanel" style="display: ${currentSubTab === 'pending' ? 'block' : 'none'}">
+                            <div id="pendingSummary" class="pending-summary"></div>
                             <div class="batch-bar">
                                 <button class="btn btn-success" id="batchOutBtn">📦 批量出库</button>
                                 <span style="color:#666; font-size:13px;">勾选后点击批量出库，扣减库存并记录</span>
                             </div>
                             <div class="table-wrapper">
                                 <table class="data-table">
-                                    <thead>
-                                        <tr><th style="width:40px"><input type="checkbox" id="selectAllPending"></th><th>标签ID</th><th>规格</th><th>色号</th><th>机号</th><th>净重(kg)</th><th>打包</th><th>扫码时间</th></tr>
-                                    </thead>
+                                    <thead><tr><th style="width:40px"><input type="checkbox" id="selectAllPending"></th><th>标签ID</th><th>规格</th><th>色号</th><th>净重(kg)</th><th>打包</th><th>扫码时间</th></tr></thead>
                                     <tbody id="pendingTableBody"></tbody>
                                 </table>
                             </div>
                         </div>
                     </div>
                     
+                    <!-- 入仓记录面板 -->
                     <div id="inPanel" class="panel" style="display: ${currentTab === 'in' ? 'block' : 'none'}">
-                        <div class="search-bar"><input type="text" id="inSearch" placeholder="搜索..."><button class="btn" id="searchInBtn">搜索</button><button class="btn" id="refreshInBtn">全部</button></div>
-                        <div class="table-wrapper"><table class="data-table"><thead><tr><th>标签ID</th><th>规格</th><th>色号</th><th>机号</th><th>数量</th><th>净重</th><th>批号</th><th>日期</th></tr></thead><tbody id="inTableBody"></tbody></table></div>
+                        <div class="search-bar"><input type="text" id="inSearch" placeholder="搜索规格/色号/批号..."><button class="btn" id="searchInBtn">搜索</button><button class="btn" id="refreshInBtn">全部</button></div>
+                        <div class="table-wrapper"><table class="data-table"><thead><tr><th>标签ID</th><th>规格</th><th>色号</th><th>机号</th><th>数量</th><th>净重</th><th>批号</th><th>日期</th><th>操作</th></tr></thead><tbody id="inTableBody"></tbody></table></div>
                     </div>
                     
+                    <!-- 出仓记录面板 -->
                     <div id="outPanel" class="panel" style="display: ${currentTab === 'out' ? 'block' : 'none'}">
-                        <div class="search-bar"><input type="text" id="outSearch" placeholder="搜索..."><button class="btn" id="searchOutBtn">搜索</button><button class="btn" id="refreshOutBtn">全部</button></div>
-                        <div class="table-wrapper"><table class="data-table"><thead><tr><th>标签ID</th><th>规格</th><th>色号</th><th>机号</th><th>数量</th><th>净重</th><th>批号</th><th>日期</th></tr></thead><tbody id="outTableBody"></tbody>｜｜DSML｜｜</div>
+                        <div class="batch-bar"><button class="btn btn-success" id="exportOutBtn">📎 导出CSV</button></div>
+                        <div class="search-bar"><input type="text" id="outSearch" placeholder="搜索规格/色号/批号..."><button class="btn" id="searchOutBtn">搜索</button><button class="btn" id="refreshOutBtn">全部</button></div>
+                        <div class="table-wrapper"><table class="data-table"><thead><tr><th>标签ID</th><th>规格</th><th>色号</th><th>机号</th><th>数量</th><th>净重</th><th>批号</th><th>日期</th></tr></thead><tbody id="outTableBody"></tbody></table></div>
                     </div>
                 </div>
             </div>
@@ -182,6 +342,7 @@
     }
     
     function bindEvents() {
+        // 净重计算
         function calcNet() {
             let gross = parseFloat(document.getElementById('gross')?.value) || 0;
             let tong = parseFloat(document.getElementById('tong')?.value) || 0;
@@ -199,6 +360,7 @@
             calcNet();
         }
         
+        // 打印
         const printBtn = document.getElementById('printBtn');
         if (printBtn) {
             printBtn.onclick = async () => {
@@ -223,9 +385,6 @@
                 const tagId = generateTagId();
                 const date = new Date().toISOString().slice(0,10);
                 const printDate = new Date().toLocaleString();
-                // 关键：二维码包含完整URL和参数
-                const scanUrl = `https://shenchanduan.github.io/textile-system/scan.html?id=${encodeURIComponent(tagId)}`;
-                const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=${encodeURIComponent(scanUrl)}`;
                 
                 const { error: tagError } = await supabase.from('tag_records').insert({ 
                     tag_id: tagId, spec, color, machine, qty, gross, tong, box, net, 
@@ -239,72 +398,9 @@
                     package_type: handler, batch_no: batch, net_weight: net, in_date: printDate 
                 });
                 
-                const { data: stockData } = await supabase.from('stock_records').select('*')
-                    .eq('spec', spec).eq('color_no', color).eq('machine_no', machine).eq('batch_no', batch);
-                if (stockData && stockData.length > 0) {
-                    await supabase.from('stock_records').update({ 
-                        quantity: stockData[0].quantity + qty, 
-                        net_weight: (stockData[0].net_weight || 0) + net 
-                    }).eq('id', stockData[0].id);
-                } else {
-                    await supabase.from('stock_records').insert({ 
-                        spec, color_no: color, machine_no: machine, batch_no: batch, 
-                        quantity: qty, net_weight: net 
-                    });
-                }
+                await updateStock(spec, color, batch, qty, net);
                 
-                const labelHtml = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>标签</title><style>
-                    *{margin:0;padding:0;box-sizing:border-box}
-                    body{background:white;display:flex;justify-content:center;align-items:center;min-height:100vh;font-family:'SimSun','宋体',monospace}
-                    .label{width:100mm;height:100mm;border:1px solid #000;padding:3mm;position:relative;margin:0 auto}
-                    .company{text-align:center;font-size:19pt;font-weight:bold}
-                    .address{text-align:center;font-size:11pt;line-height:1.2;font-weight:bold}
-                    .top-line{border-top:0.5px solid #000;margin:2mm 0}
-                    .two-col{display:flex;justify-content:space-between;margin:2mm 0 0}
-                    .left-col,.right-col{width:45%}
-                    .field{margin-bottom:2mm;display:flex}
-                    .field-name{width:12mm;font-size:13pt;font-weight:bold}
-                    .field-value{font-size:13pt;padding-left:2mm;font-weight:bold}
-                    .red .field-name,.red .field-value{color:#c00}
-                    .date-row{display:flex;margin-top:2mm}
-                    .date-row .field-name{width:12mm;font-size:13pt;font-weight:bold}
-                    .date-row .field-value{font-size:13pt;font-weight:bold}
-                    .footer{position:absolute;bottom:8mm;left:7mm;font-size:16pt;font-weight:bold;color:#c00}
-                    .qr-area{position:absolute;bottom:3mm;right:12mm}
-                    .qr-img{width:24mm;height:24mm}
-                    @page{size:100mm 100mm;margin:0}
-                    @media print{body{margin:0;padding:0}.label{border:none}}
-                </style></head><body>
-                <div class="label">
-                    <div class="company">中山市淮鸿橡筋织带有限公司</div>
-                    <div class="address">地址：中山市三角镇接民村金达路三号B栋五楼</div>
-                    <div class="address">电话：13535238522</div>
-                    <div class="top-line"></div>
-                    <div class="two-col">
-                        <div class="left-col">
-                            <div class="field"><span class="field-name">规格</span><span class="field-value">${escapeHtml(spec)}</span></div>
-                            <div class="field"><span class="field-name">机号</span><span class="field-value">${escapeHtml(machine)}</span></div>
-                            <div class="field"><span class="field-name">毛重</span><span class="field-value">${gross.toFixed(2)}kg</span></div>
-                            <div class="field"><span class="field-name">箱重</span><span class="field-value">${box.toFixed(2)}kg</span></div>
-                            <div class="field red"><span class="field-name">净重</span><span class="field-value">${net.toFixed(2)}kg</span></div>
-                        </div>
-                        <div class="right-col">
-                            <div class="field"><span class="field-name">色号</span><span class="field-value">${escapeHtml(color) || '-'}</span></div>
-                            <div class="field"><span class="field-name">数量</span><span class="field-value">${qty}个</span></div>
-                            <div class="field"><span class="field-name">筒重</span><span class="field-value">${tong.toFixed(2)}kg</span></div>
-                            <div class="field"><span class="field-name">打包</span><span class="field-value">${escapeHtml(handler)}</span></div>
-                            <div class="field"><span class="field-name">批号</span><span class="field-value">${escapeHtml(batch) || '-'}</span></div>
-                        </div>
-                    </div>
-                    <div class="date-row"><span class="field-name">日期</span><span class="field-value">${date}</span></div>
-                    <div class="footer">不同机号、批号<br>分开使用</div>
-                    <div class="qr-area"><img class="qr-img" src="${qrUrl}"></div>
-                </div>
-                </body></html>`;
-                
-                const printFrame = document.getElementById('printFrame');
-                printFrame.srcdoc = labelHtml;
-                setTimeout(() => printFrame.contentWindow.print(), 100);
+                await printLabel(tagId, { spec, color, machine, qty, gross, tong, box, net, handler, batch });
                 
                 showToast('✅ 打印成功！标签ID: ' + tagId);
                 
@@ -312,8 +408,8 @@
                 document.getElementById('machine').value = '';
                 document.getElementById('qty').value = '';
                 document.getElementById('gross').value = '';
-                document.getElementById('tong').value = '0';
-                document.getElementById('box').value = '0';
+                document.getElementById('tong').value = '';
+                document.getElementById('box').value = '';
                 document.getElementById('handler').value = '';
                 document.getElementById('batch').value = '';
                 calcNet();
@@ -324,7 +420,30 @@
             };
         }
         
-        // PC端扫码转为待出库
+        // 补打功能
+        const searchAndReprintBtn = document.getElementById('searchAndReprintBtn');
+        if (searchAndReprintBtn) {
+            searchAndReprintBtn.onclick = async () => {
+                const tagId = document.getElementById('repairTagId').value.trim();
+                if (!tagId) { showToast('请输入标签ID'); return; }
+                await reprintTag(tagId);
+                document.getElementById('repairTagId').value = '';
+            };
+        }
+        
+        // 回车补打
+        const repairInput = document.getElementById('repairTagId');
+        if (repairInput) {
+            repairInput.addEventListener('keypress', async (e) => {
+                if (e.key === 'Enter') {
+                    const tagId = repairInput.value.trim();
+                    if (tagId) await reprintTag(tagId);
+                    repairInput.value = '';
+                }
+            });
+        }
+        
+        // 扫码出库
         const pcConfirmBtn = document.getElementById('pcConfirmBtn');
         if (pcConfirmBtn) {
             pcConfirmBtn.onclick = async () => {
@@ -341,11 +460,42 @@
             };
         }
         
+        // 加载待出库列表及汇总
         async function loadPendingList() {
             const { data } = await supabase.from('tag_records').select('*').eq('status', '待出库').order('pending_time');
             const tbody = document.getElementById('pendingTableBody');
+            
+            // 汇总：按规格+批号分组
+            const summaryMap = new Map();
+            for (let item of (data || [])) {
+                const key = `${item.spec}|${item.batch || ''}`;
+                if (!summaryMap.has(key)) {
+                    summaryMap.set(key, { spec: item.spec, batch: item.batch || '-', qty: 0, net: 0 });
+                }
+                let sum = summaryMap.get(key);
+                sum.qty += item.qty;
+                sum.net += item.net;
+            }
+            const summaryArray = Array.from(summaryMap.values());
+            
+            const summaryDiv = document.getElementById('pendingSummary');
+            if (summaryDiv) {
+                if (summaryArray.length === 0) {
+                    summaryDiv.innerHTML = '<span>暂无待出库产品</span>';
+                } else {
+                    summaryDiv.innerHTML = summaryArray.map(s => `
+                        <div class="pending-summary-item">
+                            📦 <strong>${escapeHtml(s.spec)}</strong> 
+                            批号: ${escapeHtml(s.batch)} 
+                            共 <strong>${s.qty}</strong> 个 
+                            净重 <strong>${s.net.toFixed(2)}</strong> kg
+                        </div>
+                    `).join('');
+                }
+            }
+            
             if (!data || data.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="8" style="text-align:center">暂无待出库记录</td></td>';
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align:center">暂无待出库记录</td></tr>';
                 return;
             }
             tbody.innerHTML = data.map(item => `
@@ -354,7 +504,6 @@
                     <td>${escapeHtml(item.tag_id)}</td>
                     <td>${escapeHtml(item.spec)}</td>
                     <td>${escapeHtml(item.color || '-')}</td>
-                    <td>${escapeHtml(item.machine)}</td>
                     <td>${item.net} kg</td>
                     <td>${escapeHtml(item.handler || '-')}</td>
                     <td>${item.pending_time ? new Date(item.pending_time).toLocaleString() : '-'}</td>
@@ -369,6 +518,7 @@
             }
         }
         
+        // 批量出库
         const batchOutBtn = document.getElementById('batchOutBtn');
         if (batchOutBtn) {
             batchOutBtn.onclick = async () => {
@@ -386,11 +536,7 @@
                             unique_id: tagId, spec: tag.spec, color_no: tag.color, machine_no: tag.machine,
                             quantity: tag.qty, net_weight: tag.net, batch_no: tag.batch, out_date: new Date().toLocaleString()
                         });
-                        const { data: stock } = await supabase.from('stock_records').select('*')
-                            .eq('spec', tag.spec).eq('color_no', tag.color || '').eq('machine_no', tag.machine).eq('batch_no', tag.batch || '');
-                        if (stock && stock.length) {
-                            await supabase.from('stock_records').update({ quantity: stock[0].quantity - tag.qty }).eq('id', stock[0].id);
-                        }
+                        await updateStock(tag.spec, tag.color, tag.batch, -tag.qty, -tag.net);
                         success++;
                     }
                 }
@@ -401,24 +547,34 @@
             };
         }
         
+        // 加载库存（按规格+色号+批号合并，忽略机号）
         async function loadStock() {
             const { data } = await supabase.from('stock_records').select('*').order('spec');
             const search = document.getElementById('stockSearch')?.value.toLowerCase() || '';
-            const filtered = (data || []).filter(i => i.spec.toLowerCase().includes(search) || (i.color_no || '').toLowerCase().includes(search) || (i.machine_no || '').toLowerCase().includes(search));
+            const filtered = (data || []).filter(i => 
+                i.spec.toLowerCase().includes(search) || 
+                (i.color_no || '').toLowerCase().includes(search) || 
+                (i.batch_no || '').toLowerCase().includes(search)
+            );
             const container = document.getElementById('stockList');
             if (!filtered.length) { container.innerHTML = '<p>暂无库存</p>'; return; }
             container.innerHTML = filtered.map(i => `
                 <div class="stock-item">
-                    <div><strong>${escapeHtml(i.spec)}</strong> ${i.color_no ? '| 色号:' + escapeHtml(i.color_no) : ''} ${i.machine_no ? '| 机号:' + escapeHtml(i.machine_no) : ''}</div>
+                    <div><strong>${escapeHtml(i.spec)}</strong> ${i.color_no ? '| 色号:' + escapeHtml(i.color_no) : ''} ${i.batch_no ? '| 批号:' + escapeHtml(i.batch_no) : ''}</div>
                     <div>数量: ${i.quantity} | 净重: ${(i.net_weight||0).toFixed(2)}kg</div>
                 </div>
             `).join('');
         }
         
+        // 加载入仓记录（带删除和补打按钮）
         async function loadInRecords() {
             const { data } = await supabase.from('in_records').select('*').order('created_at', { ascending: false });
             const tbody = document.getElementById('inTableBody');
-            tbody.innerHTML = (data || []).map(r => `
+            if (!data || data.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="9" style="text-align:center">暂无入仓记录</td></tr>';
+                return;
+            }
+            tbody.innerHTML = data.map(r => `
                 <tr>
                     <td>${escapeHtml(r.unique_id||'-')}</td>
                     <td>${escapeHtml(r.spec||'-')}</td>
@@ -428,6 +584,10 @@
                     <td>${r.net_weight?r.net_weight+'kg':'-'}</td>
                     <td>${escapeHtml(r.batch_no||'-')}</td>
                     <td>${r.in_date||'-'}</td>
+                    <td>
+                        <button class="btn btn-sm" onclick="window.reprintTagFromGlobal('${escapeHtml(r.unique_id)}')">🖨️ 补打</button>
+                        <button class="btn btn-sm btn-danger" onclick="window.deleteInRecordFromGlobal('${escapeHtml(r.unique_id)}')">🗑️ 删除</button>
+                    </td>
                 </tr>
             `).join('');
         }
@@ -449,14 +609,34 @@
             `).join('');
         }
         
+        // 导出出库记录
+        const exportOutBtn = document.getElementById('exportOutBtn');
+        if (exportOutBtn) {
+            exportOutBtn.onclick = async () => {
+                const { data } = await supabase.from('out_records').select('*').order('created_at', { ascending: false });
+                if (!data || data.length === 0) { showToast('无数据可导出'); return; }
+                exportToCSV(data, `出库记录_${new Date().toISOString().slice(0,10)}.csv`, [
+                    { key: 'unique_id', title: '标签ID' },
+                    { key: 'spec', title: '规格' },
+                    { key: 'color_no', title: '色号' },
+                    { key: 'machine_no', title: '机号' },
+                    { key: 'quantity', title: '数量' },
+                    { key: 'net_weight', title: '净重(kg)' },
+                    { key: 'batch_no', title: '批号' },
+                    { key: 'out_date', title: '出库日期' }
+                ]);
+                showToast('✅ 导出成功');
+            };
+        }
+        
         const searchInBtn = document.getElementById('searchInBtn');
         if (searchInBtn) {
             searchInBtn.onclick = async () => {
                 const kw = document.getElementById('inSearch').value.trim();
                 if (!kw) { loadInRecords(); return; }
-                const { data } = await supabase.from('in_records').select('*').or(`spec.ilike.%${kw}%,color_no.ilike.%${kw}%,machine_no.ilike.%${kw}%,batch_no.ilike.%${kw}%`);
+                const { data } = await supabase.from('in_records').select('*').or(`spec.ilike.%${kw}%,color_no.ilike.%${kw}%,batch_no.ilike.%${kw}%`);
                 const tbody = document.getElementById('inTableBody');
-                tbody.innerHTML = (data || []).map(r => `</table><td colspan="8">${escapeHtml(r.spec)}</td></tr>`).join('');
+                tbody.innerHTML = (data || []).map(r => `<tr><td colspan="9">${escapeHtml(r.spec)}</td></tr>`).join('');
             };
         }
         
@@ -468,7 +648,7 @@
             searchOutBtn.onclick = async () => {
                 const kw = document.getElementById('outSearch').value.trim();
                 if (!kw) { loadOutRecords(); return; }
-                const { data } = await supabase.from('out_records').select('*').or(`spec.ilike.%${kw}%,color_no.ilike.%${kw}%,machine_no.ilike.%${kw}%,batch_no.ilike.%${kw}%`);
+                const { data } = await supabase.from('out_records').select('*').or(`spec.ilike.%${kw}%,color_no.ilike.%${kw}%,batch_no.ilike.%${kw}%`);
                 const tbody = document.getElementById('outTableBody');
                 tbody.innerHTML = (data || []).map(r => `<tr><td colspan="8">${escapeHtml(r.spec)}</td></tr>`).join('');
             };
@@ -482,6 +662,10 @@
         
         const stockSearch = document.getElementById('stockSearch');
         if (stockSearch) stockSearch.addEventListener('input', loadStock);
+        
+        // 全局函数供按钮调用
+        window.reprintTagFromGlobal = async (tagId) => { await reprintTag(tagId); loadInRecords(); };
+        window.deleteInRecordFromGlobal = async (tagId) => { await deleteInRecord(tagId); };
         
         document.querySelectorAll('.sub-tab').forEach(tab => {
             tab.addEventListener('click', () => {
