@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>纺织生产端管理系统 - 入仓记录</title>
+    <title>纺织生产端管理系统</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -57,10 +57,17 @@
         .btn-warning { background: #e65100; }
         .btn-outline { background: transparent; color: #666; border: 1px solid #ccc; }
         .btn-outline:hover { background: #f5f5f5; }
+        .btn-export { background: #6a1b9a; }
+        .btn-export:hover { background: #4a148c; }
         .select-all-btn { background: #1565c0; color: white; border: none; padding: 6px 16px; border-radius: 6px; cursor: pointer; font-size: 13px; }
         .select-all-btn:hover { background: #0d47a1; }
         .select-all-btn.grey { background: #78909c; }
         .select-all-btn.grey:hover { background: #546e7a; }
+
+        .form-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px; }
+        .form-group { display: flex; flex-direction: column; }
+        .form-group label { font-weight: bold; margin-bottom: 5px; font-size: 13px; }
+        .form-group input { padding: 8px 10px; border: 1px solid #ddd; border-radius: 6px; }
 
         .table-wrapper { overflow-x: auto; margin-top: 15px; border: 1px solid #e2edf5; border-radius: 12px; max-height: 520px; overflow-y: auto; }
         .table-wrapper thead { position: sticky; top: 0; z-index: 10; }
@@ -68,6 +75,13 @@
         .data-table th, .data-table td { border: 1px solid #e2edf5; padding: 8px 6px; text-align: left; }
         .data-table th { background: #eef3fc; white-space: nowrap; position: sticky; top: 0; z-index: 10; }
         .data-table td { word-break: break-word; }
+
+        .search-bar { display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap; align-items: center; }
+        .search-bar input { padding: 8px 12px; border: 1px solid #ddd; border-radius: 20px; flex: 1; min-width: 150px; }
+
+        .stock-item { background: #f8f9fa; padding: 12px; margin-bottom: 10px; border-radius: 8px; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 10px; }
+
+        .net-weight-display { background: #e8f5e9; padding: 8px 12px; border-radius: 6px; font-weight: bold; margin-bottom: 15px; }
 
         .modal-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
@@ -90,17 +104,35 @@
         .modal-table th { background: #eef3fc; position: sticky; top: 0; z-index: 5; }
         .modal-table .total-row { background: #e8f0fe; font-weight: bold; }
 
+        .password-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; justify-content: center; align-items: center; z-index: 9999; }
+        .password-modal .modal-box { background: white; padding: 30px; border-radius: 16px; max-width: 380px; width: 90%; box-shadow: 0 20px 60px rgba(0,0,0,0.3); }
+        .password-modal .modal-box h3 { margin-bottom: 16px; color: #c62828; }
+        .password-modal .modal-box input { width: 100%; padding: 12px; border: 2px solid #ddd; border-radius: 8px; font-size: 16px; margin-bottom: 16px; }
+        .password-modal .modal-box .btn-row { display: flex; gap: 10px; justify-content: flex-end; }
+        .password-modal .modal-box .btn-row button { padding: 10px 24px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; }
+
+        .customer-modal .modal-box input { width: 100%; padding: 12px 14px; border: 2px solid #ddd; border-radius: 8px; font-size: 16px; margin-bottom: 16px; }
+        .customer-modal .modal-box input:focus { border-color: #1f6e8c; outline: none; }
+
         .toast-msg { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); background: #333; color: white; padding: 10px 20px; border-radius: 30px; z-index: 2000; animation: fadeOut 2.5s ease; }
         @keyframes fadeOut { 0% { opacity: 1; } 70% { opacity: 1; } 100% { opacity: 0; visibility: hidden; } }
 
-        .status-badge {
-            display: inline-block; padding: 2px 10px; border-radius: 12px; font-size: 12px; font-weight: 600;
-        }
-        .status-pending { background: #fff3e0; color: #e65100; }
+        .status-badge { display: inline-block; padding: 2px 10px; border-radius: 12px; font-size: 12px; font-weight: 600; }
+        .status-pending-in { background: #fff3e0; color: #e65100; }
         .status-in { background: #e8f5e9; color: #2e7d32; }
         .status-out { background: #fce4ec; color: #c62828; }
+        .status-pending-out { background: #fff3e0; color: #e65100; }
 
         .empty-row td { text-align: center; color: #999; padding: 30px 0; }
+
+        .print-iframe { position: absolute; width: 0; height: 0; border: none; visibility: hidden; }
+        .clear-all-tiny { position: fixed; bottom: 12px; right: 16px; z-index: 999; opacity: 0.25; transition: opacity 0.2s; }
+        .clear-all-tiny:hover { opacity: 0.7; }
+        .clear-all-tiny .btn { font-size: 11px; padding: 4px 10px; border-radius: 4px; background: #999; color: #eee; border: none; cursor: pointer; }
+
+        .print-grid .form-group label { font-size: 16px; font-weight: 700; color: #1a3a4a; }
+        .print-grid .form-group input { padding: 12px 14px; font-size: 16px; border-width: 2px; border-color: #b0c8d6; border-radius: 10px; font-weight: 600; }
+        .print-net { font-size: 18px; padding: 14px 18px; background: #d4edda; border-radius: 12px; border: 2px solid #2e7d32; }
 
         @media (max-width: 600px) {
             .summary-cards { gap: 8px; padding: 10px; }
@@ -109,12 +141,15 @@
             .main-content { padding: 12px; }
             .tab { padding: 8px 12px; font-size: 13px; }
             .modal-box { padding: 20px; }
+            .clear-all-tiny { bottom: 8px; right: 10px; }
+            .clear-all-tiny .btn { font-size: 10px; padding: 3px 8px; }
         }
         input { autocomplete: off; }
     </style>
 </head>
 <body>
 <div id="app"></div>
+<iframe id="printFrame" class="print-iframe"></iframe>
 
 <script>
 (function(){
@@ -122,8 +157,45 @@
     const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRkaGJ6ZG5haWVxY3F6bWJjdGx4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEyMTY4NDEsImV4cCI6MjA5Njc5Mjg0MX0.QSYPR37gOWNJkGIOEMwKsSa6mPkSFa5bXU_JSfxLWSM';
     const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    let currentTab = 'in';          // print | scan | stock | in | out
-    let currentSubTab = 'pending';  // pending | all
+    const ADMIN_PASSWORD = '123';
+    let currentTab = 'print';
+    let currentSubTab = 'pending';
+    let outDataCache = [];
+    let scanTimer = null;
+
+    const PRINT_CACHE_KEY = 'textile_print_last_data';
+
+    function savePrintCache(data) {
+        const toSave = { ...data };
+        delete toSave.gross;
+        try { localStorage.setItem(PRINT_CACHE_KEY, JSON.stringify(toSave)); } catch(e) {}
+    }
+
+    function loadPrintCache() {
+        try {
+            const raw = localStorage.getItem(PRINT_CACHE_KEY);
+            if (raw) {
+                const data = JSON.parse(raw);
+                const valid = ['spec', 'color', 'machine', 'qty', 'tong', 'box', 'handler', 'batch'];
+                const result = {};
+                valid.forEach(key => { if (data[key] !== undefined && data[key] !== null && data[key] !== '') result[key] = data[key]; });
+                return result;
+            }
+        } catch(e) {}
+        return null;
+    }
+
+    function fillPrintForm(data) {
+        if (!data) return;
+        const map = { spec: 'spec', color: 'color', machine: 'machine', qty: 'qty', tong: 'tong', box: 'box', handler: 'handler', batch: 'batch' };
+        Object.keys(map).forEach(key => {
+            const el = document.getElementById(map[key]);
+            if (el && data[key] !== undefined && data[key] !== null) el.value = data[key];
+        });
+        const grossEl = document.getElementById('gross');
+        if (grossEl) grossEl.value = '';
+        calcNet();
+    }
 
     function showToast(msg) {
         let div = document.createElement('div');
@@ -146,6 +218,236 @@
         return 'TAG' + ts + random;
     }
 
+    function showPasswordModal(callback) {
+        const overlay = document.createElement('div');
+        overlay.className = 'password-modal';
+        overlay.innerHTML = `
+            <div class="modal-box">
+                <h3>🔐 请输入操作密码</h3>
+                <input type="password" id="pwdInput" placeholder="请输入密码..." autocomplete="off">
+                <div class="btn-row">
+                    <button class="btn-outline" onclick="this.closest('.password-modal').remove()">取消</button>
+                    <button class="btn btn-danger" id="pwdConfirmBtn">确认</button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(overlay);
+        const input = overlay.querySelector('#pwdInput');
+        input.focus();
+        overlay.querySelector('#pwdConfirmBtn').onclick = () => {
+            const val = input.value.trim();
+            if (val === ADMIN_PASSWORD) {
+                overlay.remove();
+                callback();
+            } else {
+                showToast('❌ 密码错误');
+                input.value = '';
+                input.focus();
+            }
+        };
+        input.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') overlay.querySelector('#pwdConfirmBtn').click();
+        });
+    }
+
+    // ===== 送货明细打印 =====
+    function generateDeliveryPreview(records, customer) {
+        if (!records || records.length === 0) { showToast('没有数据可导出'); return; }
+        const groups = {};
+        records.forEach(r => {
+            const key = r.spec || '未命名';
+            if (!groups[key]) groups[key] = [];
+            groups[key].push(r);
+        });
+        const now = new Date();
+        const dateStr = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0') + '-' + String(now.getDate()).padStart(2,'0');
+        let globalSeq = 0, totalQty = 0, totalNet = 0, tableRows = '';
+        const groupKeys = Object.keys(groups);
+        groupKeys.forEach((spec) => {
+            const items = groups[spec];
+            let groupQty = 0, groupNet = 0, isFirst = true;
+            items.forEach((r) => {
+                globalSeq++;
+                const qty = parseFloat(r.qty || r.quantity) || 0;
+                const net = parseFloat(r.net || r.net_weight) || 0;
+                const gross = parseFloat(r.gross || r.gross_weight) || 0;
+                const box = parseFloat(r.box || r.box_weight) || 0;
+                const tube = parseFloat(r.tong || r.tube_weight) || 0;
+                groupQty += qty; groupNet += net;
+                totalQty += qty; totalNet += net;
+                tableRows += `
+                    <tr>
+                        <td style="text-align:center;">${globalSeq}</td>
+                        <td>${isFirst ? escapeHtml(r.spec || '-') : ''}</td>
+                        <td>${escapeHtml(r.color || r.color_no || '-')}</td>
+                        <td style="text-align:center;">${qty}</td>
+                        <td style="text-align:right;">${gross.toFixed(2)}</td>
+                        <td style="text-align:right;">${box.toFixed(2)}</td>
+                        <td style="text-align:right;">${tube.toFixed(2)}</td>
+                        <td style="text-align:right;">${net.toFixed(2)}</td>
+                    </tr>
+                `;
+                isFirst = false;
+            });
+            tableRows += `
+                <tr style="font-weight:bold; background:#f5f5f5;">
+                    <td style="text-align:center;">小计</td><td></td><td></td>
+                    <td style="text-align:center;">${groupQty}</td><td></td><td></td><td></td>
+                    <td style="text-align:right;">${groupNet.toFixed(2)}</td>
+                </tr>
+            `;
+        });
+        tableRows += `
+            <tr style="font-weight:bold; background:#e8f0fe;">
+                <td style="text-align:center;">合计</td><td></td><td></td>
+                <td style="text-align:center;">${totalQty}</td><td></td><td></td><td></td>
+                <td style="text-align:right;">${totalNet.toFixed(2)}</td>
+            </tr>
+        `;
+        const htmlContent = `<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><title>送货明细表</title>
+<style>
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body { display:flex; justify-content:center; align-items:center; min-height:100vh; background:#f0f0f0; font-family:'Microsoft YaHei','SimSun',sans-serif; padding:20px; }
+    .page { width:210mm; min-height:297mm; background:white; padding:25mm 20mm 20mm 20mm; box-shadow:0 4px 20px rgba(0,0,0,0.1); margin:0 auto; }
+    .title { text-align:center; font-size:26pt; font-weight:900; letter-spacing:4px; margin-bottom:12mm; color:#1a1a1a; }
+    .info-row { display:flex; justify-content:space-between; font-size:14pt; margin-bottom:8mm; font-weight:600; }
+    table { width:100%; border-collapse:collapse; font-size:11pt; margin-top:2mm; }
+    table th { background:#f0f4f8; font-weight:700; border:1.5px solid #333; padding:6px 8px; text-align:center; }
+    table td { border:1.5px solid #333; padding:5px 8px; text-align:left; }
+    table td:first-child { text-align:center; }
+    table td:nth-child(4) { text-align:center; }
+    .footer-row { margin-top:12mm; display:flex; justify-content:space-between; font-size:14pt; font-weight:600; }
+    @media print { body { background:white; padding:0; } .page { box-shadow:none; padding:20mm 18mm 18mm 18mm; } }
+    @page { size: A4; margin: 0; }
+</style></head>
+<body>
+<div class="page">
+    <div class="title">中山市淮鸿橡筋织带送货明细表</div>
+    <div class="info-row">
+        <span><span class="label">日期：</span>${dateStr}</span>
+        <span><span class="label">客户：</span>${escapeHtml(customer)}</span>
+    </div>
+    <table>
+        <thead><tr><th style="width:10%;">序号</th><th style="width:16%;">货号</th><th style="width:12%;">颜色</th><th style="width:10%;">个数</th><th style="width:13%;">毛重</th><th style="width:13%;">皮重</th><th style="width:13%;">筒重</th><th style="width:13%;">净重kg</th></tr></thead>
+        <tbody>${tableRows}</tbody>
+    </table>
+    <div class="footer-row">
+        <span><span class="label">制单：</span>________</span>
+        <span><span class="label">签单：</span>________</span>
+    </div>
+</div>
+<script>window.onload=function(){setTimeout(function(){window.print();},400);};<\/script>
+</body></html>`;
+        const win = window.open('', '_blank', 'width=900,height=800,scrollbars=yes');
+        if (win) { win.document.write(htmlContent); win.document.close(); } else { showToast('⚠️ 请允许弹出窗口'); }
+    }
+
+    function showCustomerModalAndExport(records) {
+        if (!records || records.length === 0) { showToast('没有数据可导出'); return; }
+        const overlay = document.createElement('div');
+        overlay.className = 'modal-overlay customer-modal';
+        overlay.innerHTML = `
+            <div class="modal-box">
+                <h3>📋 打印送货明细</h3>
+                <p>共 ${records.length} 条记录，请输入客户名称：</p>
+                <input type="text" id="customerInput" placeholder="请输入公司名" autocomplete="off">
+                <div class="btn-row">
+                    <button class="btn-outline" onclick="this.closest('.modal-overlay').remove()">取消</button>
+                    <button class="btn" id="confirmCustomerBtn">确认打印</button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(overlay);
+        const input = overlay.querySelector('#customerInput');
+        input.focus();
+        overlay.querySelector('#confirmCustomerBtn').onclick = () => {
+            const customer = input.value.trim() || '________________';
+            overlay.remove();
+            generateDeliveryPreview(records, customer);
+        };
+        input.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') overlay.querySelector('#confirmCustomerBtn').click();
+        });
+    }
+
+    function showConfirmPrintDialog(records) {
+        const overlay = document.createElement('div');
+        overlay.className = 'modal-overlay';
+        overlay.innerHTML = `
+            <div class="modal-box">
+                <h3>✅ 出库完成！</h3>
+                <p>已成功出库 <strong>${records.length}</strong> 条记录</p>
+                <div class="btn-row">
+                    <button class="btn-outline" onclick="this.closest('.modal-overlay').remove()">暂不打印</button>
+                    <button class="btn btn-print" id="confirmPrintBtn">📋 打印送货明细</button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(overlay);
+        overlay.querySelector('#confirmPrintBtn').onclick = () => {
+            overlay.remove();
+            showCustomerModalAndExport(records);
+        };
+    }
+
+    // ===== 打印标签 =====
+    async function printLabel(tagId, data) {
+        const qrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=' + encodeURIComponent(tagId);
+        const date = new Date().toISOString().slice(0,10);
+        const labelHtml = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>标签</title><style>
+            *{margin:0;padding:0;box-sizing:border-box}
+            body{background:white;display:flex;justify-content:center;align-items:center;min-height:100vh;font-family:"Microsoft YaHei","SimHei",sans-serif}
+            .label{width:100mm;height:100mm;border:1px solid #000;padding:3mm;position:relative;margin:0 auto}
+            .company{text-align:center;font-size:19pt;font-weight:900}
+            .address{text-align:center;font-size:11pt;line-height:1.2;font-weight:900}
+            .top-line{border-top:1px solid #000;margin:2mm 0}
+            .two-col{display:flex;justify-content:space-between;margin:2mm 0 0}
+            .left-col,.right-col{width:45%}
+            .field{margin-bottom:2mm;display:flex;align-items:baseline}
+            .field-name{width:12mm;font-size:13pt;font-weight:900}
+            .field-value{font-size:13pt;padding-left:2mm;font-weight:900}
+            .red .field-name,.red .field-value{color:#c00;font-weight:900}
+            .date-row{display:flex;margin-top:2mm}
+            .date-row .field-name{width:12mm;font-size:13pt;font-weight:900}
+            .date-row .field-value{font-size:13pt;font-weight:900}
+            .footer{position:absolute;bottom:8mm;left:7mm;font-size:16pt;font-weight:900;color:#c00;line-height:1.3}
+            .qr-area{position:absolute;bottom:3mm;right:12mm}
+            .qr-img{width:24mm;height:24mm}
+            @page{size:100mm 100mm;margin:0}
+            @media print{body{margin:0;padding:0}.label{border:none}}
+        </style></head><body>
+        <div class="label">
+            <div class="company">中山市淮鸿橡筋织带有限公司</div>
+            <div class="address">地址：中山市三角镇接民村金达路三号B栋五楼</div>
+            <div class="address">电话：13535238522</div>
+            <div class="top-line"></div>
+            <div class="two-col">
+                <div class="left-col">
+                    <div class="field"><span class="field-name">规格</span><span class="field-value">${escapeHtml(data.spec)}</span></div>
+                    <div class="field"><span class="field-name">机号</span><span class="field-value">${escapeHtml(data.machine)}</span></div>
+                    <div class="field"><span class="field-name">毛重</span><span class="field-value">${data.gross.toFixed(2)}kg</span></div>
+                    <div class="field"><span class="field-name">箱重</span><span class="field-value">${data.box.toFixed(2)}kg</span></div>
+                    <div class="field red"><span class="field-name">净重</span><span class="field-value">${data.net.toFixed(2)}kg</span></div>
+                </div>
+                <div class="right-col">
+                    <div class="field"><span class="field-name">色号</span><span class="field-value">${escapeHtml(data.color || '-')}</span></div>
+                    <div class="field"><span class="field-name">数量</span><span class="field-value">${data.qty}个</span></div>
+                    <div class="field"><span class="field-name">筒重</span><span class="field-value">${data.tong.toFixed(2)}kg</span></div>
+                    <div class="field"><span class="field-name">打包</span><span class="field-value">${escapeHtml(data.handler)}</span></div>
+                    <div class="field"><span class="field-name">批号</span><span class="field-value">${escapeHtml(data.batch || '-')}</span></div>
+                </div>
+            </div>
+            <div class="date-row"><span class="field-name">日期</span><span class="field-value">${date}</span></div>
+            <div class="footer">不同机号、批号<br>分开使用</div>
+            <div class="qr-area"><img class="qr-img" src="${qrUrl}"></div>
+        </div>
+        </body></html>`;
+        const printFrame = document.getElementById('printFrame');
+        printFrame.srcdoc = labelHtml;
+        setTimeout(() => printFrame.contentWindow.print(), 100);
+    }
+
     // ===== 更新库存 =====
     async function updateStock(spec, color, batch, deltaQty, deltaNet) {
         const { data: stock } = await supabase.from('stock_records')
@@ -153,7 +455,6 @@
             .eq('spec', spec)
             .eq('color_no', color || '')
             .eq('batch_no', batch || '');
-        
         if (stock && stock.length > 0) {
             const newQty = (stock[0].quantity || 0) + deltaQty;
             const newNet = (stock[0].net_weight || 0) + deltaNet;
@@ -165,6 +466,82 @@
         } else if (deltaQty > 0 || deltaNet > 0) {
             await supabase.from('stock_records').insert({ spec, color_no: color || '', batch_no: batch || '', quantity: Math.max(0, deltaQty), net_weight: Math.max(0, deltaNet) });
         }
+    }
+
+    // ===== 取消待出库 =====
+    async function cancelPending(tagId) {
+        if (!confirm('确定取消待出库 ' + tagId + ' 吗？')) return;
+        const { data: tag } = await supabase.from('tag_records').select('*').eq('tag_id', tagId).single();
+        if (!tag) { showToast('记录不存在'); return; }
+        if (tag.status !== '待出库') { showToast('该记录不是待出库状态'); return; }
+        await supabase.from('tag_records').update({ status: '已入仓', pending_time: null }).eq('tag_id', tagId);
+        showToast('✅ 已取消待出库');
+        loadPendingList();
+        loadSummary();
+    }
+
+    // ===== 删除入仓记录 =====
+    async function deleteInRecord(uniqueId) {
+        if (!confirm('确定删除此入仓记录吗？将同步删除标签并回滚库存！')) return;
+        const { data: tag } = await supabase.from('tag_records').select('*').eq('tag_id', uniqueId).single();
+        if (!tag) { showToast('记录不存在'); return; }
+        if (tag.status !== '已入仓') { showToast('只能删除已入仓状态的记录'); return; }
+        await supabase.from('in_records').delete().eq('unique_id', uniqueId);
+        await supabase.from('tag_records').delete().eq('tag_id', uniqueId);
+        await updateStock(tag.spec, tag.color, tag.batch, -tag.qty, -tag.net);
+        showToast('✅ 已删除并回滚库存');
+        loadInRecords();
+        loadStock();
+        loadSummary();
+    }
+
+    async function batchDeleteInRecords() {
+        const cbs = document.querySelectorAll('.in-cb:checked');
+        if (cbs.length === 0) { showToast('请勾选要删除的入仓记录'); return; }
+        if (!confirm('确定批量删除 ' + cbs.length + ' 条入仓记录吗？将同步删除标签并回滚库存！')) return;
+        let success = 0;
+        for (const cb of cbs) {
+            const tagId = cb.getAttribute('data-id');
+            const { data: tag } = await supabase.from('tag_records').select('*').eq('tag_id', tagId).single();
+            if (tag && tag.status === '已入仓') {
+                await supabase.from('in_records').delete().eq('unique_id', tagId);
+                await supabase.from('tag_records').delete().eq('tag_id', tagId);
+                await updateStock(tag.spec, tag.color, tag.batch, -tag.qty, -tag.net);
+                success++;
+            }
+        }
+        showToast('✅ 批量删除完成！成功: ' + success);
+        loadInRecords();
+        loadStock();
+        loadSummary();
+    }
+
+    async function clearAllData() {
+        showPasswordModal(async () => {
+            if (!confirm('⚠️ 确定清空所有数据吗？包括入仓、出仓、库存、标签记录！此操作不可恢复！')) return;
+            if (!confirm('再次确认：清空所有数据？')) return;
+            try {
+                await supabase.from('tag_records').delete().neq('tag_id', '');
+                await supabase.from('in_records').delete().neq('unique_id', '');
+                await supabase.from('out_records').delete().neq('unique_id', '');
+                await supabase.from('stock_records').delete().neq('id', 0);
+                showToast('✅ 所有数据已清空');
+                loadInRecords(); loadOutRecords(); loadStock(); loadSummary(); loadPendingList();
+            } catch(e) { showToast('清空失败: ' + e.message); }
+        });
+    }
+
+    // ===== 补打标签 =====
+    async function reprintTag(tagId) {
+        const { data: tag } = await supabase.from('tag_records').select('*').eq('tag_id', tagId).single();
+        if (!tag) { showToast('未找到标签记录'); return false; }
+        await printLabel(tagId, {
+            spec: tag.spec, color: tag.color, machine: tag.machine,
+            qty: tag.qty, gross: tag.gross, tong: tag.tong, box: tag.box,
+            net: tag.net, handler: tag.handler, batch: tag.batch
+        });
+        showToast('🖨️ 补打标签: ' + tagId);
+        return true;
     }
 
     // ===== 加载汇总 =====
@@ -187,7 +564,162 @@
         } catch(e) {}
     }
 
-    // ===== 加载待入仓列表 =====
+    // ===== 待出库列表 =====
+    async function loadPendingList() {
+        const { data } = await supabase.from('tag_records').select('*').eq('status', '待出库').order('pending_time');
+        const tbody = document.getElementById('pendingTableBody');
+        const summaryMap = new Map();
+        for (let item of (data || [])) {
+            const key = item.spec + '|' + (item.batch || '');
+            if (!summaryMap.has(key)) summaryMap.set(key, { spec: item.spec, batch: item.batch || '-', qty: 0, net: 0 });
+            let sum = summaryMap.get(key);
+            sum.qty += item.qty;
+            sum.net += item.net;
+        }
+        const summaryArray = Array.from(summaryMap.values());
+        const summaryDiv = document.getElementById('pendingSummary');
+        if (summaryDiv) {
+            if (summaryArray.length === 0) {
+                summaryDiv.innerHTML = '<span>暂无待出库产品</span>';
+            } else {
+                summaryDiv.innerHTML = summaryArray.map(s => 
+                    '<div class="pending-summary-item">📦 <strong>' + escapeHtml(s.spec) + '</strong> 批号: ' + escapeHtml(s.batch) + ' 共 <strong>' + s.qty + '</strong> 个 净重 <strong>' + s.net.toFixed(2) + '</strong> kg</div>'
+                ).join('');
+            }
+        }
+        if (!data || data.length === 0) {
+            tbody.innerHTML = '<tr class="empty-row"><td colspan="13">暂无待出库记录</td></tr>';
+            document.getElementById('pendingCount').textContent = '0';
+            return;
+        }
+        document.getElementById('pendingCount').textContent = data.length;
+        tbody.innerHTML = data.map(item => `
+            <tr>
+                <td><input type="checkbox" class="pending-cb" data-id="${escapeHtml(item.tag_id)}"></td>
+                <td><span class="status-badge status-pending-out">待出库</span></td>
+                <td>${escapeHtml(item.spec)}</td>
+                <td>${escapeHtml(item.color || '-')}</td>
+                <td>${escapeHtml(item.machine || '-')}</td>
+                <td>${(item.gross || 0).toFixed(2)}kg</td>
+                <td>${item.qty}</td>
+                <td>${(item.tong || 0).toFixed(2)}kg</td>
+                <td>${(item.box || 0).toFixed(2)}kg</td>
+                <td>${(item.net || 0).toFixed(2)}kg</td>
+                <td>${escapeHtml(item.batch || '-')}</td>
+                <td>${item.pending_time ? new Date(item.pending_time).toLocaleString() : '-'}</td>
+                <td>${escapeHtml(item.tag_id)}</td>
+                <td><button class="btn btn-sm btn-warning" onclick="window.cancelPendingFromGlobal('${escapeHtml(item.tag_id)}')">取消</button></td>
+            </tr>
+        `).join('');
+    }
+
+    // ===== 加载库存 =====
+    async function loadStock() {
+        const { data } = await supabase.from('stock_records').select('*').order('spec');
+        const search = document.getElementById('stockSearch')?.value.toLowerCase() || '';
+        const filtered = (data || []).filter(i => 
+            i.spec.toLowerCase().includes(search) || 
+            (i.color_no || '').toLowerCase().includes(search) || 
+            (i.batch_no || '').toLowerCase().includes(search)
+        );
+        const container = document.getElementById('stockList');
+        if (!filtered.length) { container.innerHTML = '<p>暂无库存</p>'; return; }
+        container.innerHTML = filtered.map(i => 
+            '<div class="stock-item"><div><strong>' + escapeHtml(i.spec) + '</strong> ' + (i.color_no ? '| 色号:' + escapeHtml(i.color_no) : '') + (i.batch_no ? '| 批号:' + escapeHtml(i.batch_no) : '') + '</div><div>数量: ' + i.quantity + ' | 净重: ' + (i.net_weight||0).toFixed(2) + 'kg</div></div>'
+        ).join('');
+    }
+
+    // ===== 加载入仓记录 =====
+    async function loadInRecords() {
+        const { data } = await supabase.from('in_records').select('*').order('created_at', { ascending: false });
+        const tbody = document.getElementById('inTableBody');
+        if (!data || data.length === 0) {
+            tbody.innerHTML = '<tr class="empty-row"><td colspan="13">暂无入仓记录</td></tr>';
+            return;
+        }
+        tbody.innerHTML = data.map(r => `
+            <tr>
+                <td>${escapeHtml(r.spec||'-')}</td>
+                <td>${escapeHtml(r.color_no||'-')}</td>
+                <td>${escapeHtml(r.machine_no||'-')}</td>
+                <td>${r.gross_weight ? r.gross_weight+'kg' : '-'}</td>
+                <td>${r.quantity||'-'}</td>
+                <td>${r.tube_weight ? r.tube_weight+'kg' : '-'}</td>
+                <td>${r.box_weight ? r.box_weight+'kg' : '-'}</td>
+                <td>${r.net_weight ? r.net_weight+'kg' : '-'}</td>
+                <td>${escapeHtml(r.batch_no||'-')}</td>
+                <td>${r.in_date||'-'}</td>
+                <td><input type="checkbox" class="in-cb" data-id="${escapeHtml(r.unique_id)}"></td>
+                <td>${escapeHtml(r.unique_id||'-')}</td>
+                <td><button class="btn btn-sm" onclick="window.reprintTagFromGlobal('${escapeHtml(r.unique_id)}')">🖨️ 补打</button><button class="btn btn-sm btn-danger" onclick="window.deleteInRecordFromGlobal('${escapeHtml(r.unique_id)}')">🗑️</button></td>
+            </tr>
+        `).join('');
+    }
+
+    // ===== 加载出仓记录 =====
+    async function loadOutRecords() {
+        const { data } = await supabase.from('out_records').select('*').order('created_at', { ascending: false });
+        outDataCache = data || [];
+        const tbody = document.getElementById('outTableBody');
+        const search = document.getElementById('outSearch')?.value.toLowerCase() || '';
+        let filtered = outDataCache;
+        if (search) {
+            filtered = outDataCache.filter(r => 
+                (r.spec || '').toLowerCase().includes(search) ||
+                (r.color_no || '').toLowerCase().includes(search) ||
+                (r.batch_no || '').toLowerCase().includes(search) ||
+                (r.unique_id || '').toLowerCase().includes(search)
+            );
+        }
+        if (!filtered.length) {
+            tbody.innerHTML = '<tr class="empty-row"><td colspan="12">暂无出库记录</td></tr>';
+            return;
+        }
+        tbody.innerHTML = filtered.map(r => `
+            <tr>
+                <td>${escapeHtml(r.spec||'-')}</td>
+                <td>${escapeHtml(r.color_no||'-')}</td>
+                <td>${escapeHtml(r.machine_no||'-')}</td>
+                <td>${r.gross_weight ? r.gross_weight+'kg' : '-'}</td>
+                <td>${r.quantity||'-'}</td>
+                <td>${r.tube_weight ? r.tube_weight+'kg' : '-'}</td>
+                <td>${r.box_weight ? r.box_weight+'kg' : '-'}</td>
+                <td>${r.net_weight ? r.net_weight+'kg' : '-'}</td>
+                <td>${escapeHtml(r.batch_no||'-')}</td>
+                <td>${r.out_date||'-'}</td>
+                <td><input type="checkbox" class="out-cb" data-id="${escapeHtml(r.unique_id)}"></td>
+                <td>${escapeHtml(r.unique_id||'-')}</td>
+            </tr>
+        `).join('');
+    }
+
+    // ===== 导出CSV =====
+    function exportToCSV(data, filename, columns) {
+        if (!data || data.length === 0) { showToast('没有数据可导出'); return; }
+        let csvRows = [columns.map(c => c.title).join(',')];
+        for (let row of data) {
+            let values = columns.map(col => {
+                let val = row[col.key] !== undefined && row[col.key] !== null ? row[col.key] : '';
+                if (typeof val === 'string' && (val.includes(',') || val.includes('"') || val.includes('\n'))) {
+                    val = '"' + val.replace(/"/g, '""') + '"';
+                }
+                return val;
+            });
+            csvRows.push(values.join(','));
+        }
+        let blob = new Blob(['\uFEFF' + csvRows.join('\n')], { type: 'text/csv;charset=utf-8;' });
+        let link = document.createElement('a');
+        let url = URL.createObjectURL(blob);
+        link.href = url;
+        link.setAttribute('download', filename);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+        showToast('✅ 导出成功');
+    }
+
+    // ===== 待入仓相关函数 =====
     async function loadPendingInList() {
         const { data } = await supabase.from('tag_records')
             .select('*')
@@ -197,7 +729,6 @@
         const tbody = document.getElementById('pendingInTableBody');
         const summaryDiv = document.getElementById('pendingInSummary');
         
-        // 汇总：按规格+批号分组
         const summaryMap = new Map();
         for (let item of (data || [])) {
             const key = item.spec + '|' + (item.batch || '');
@@ -228,7 +759,7 @@
         tbody.innerHTML = data.map(item => `
             <tr>
                 <td><input type="checkbox" class="pending-in-cb" data-id="${escapeHtml(item.tag_id)}"></td>
-                <td><span class="status-badge status-pending">待入仓</span></td>
+                <td><span class="status-badge status-pending-in">待入仓</span></td>
                 <td>${escapeHtml(item.spec)}</td>
                 <td>${escapeHtml(item.color || '-')}</td>
                 <td>${escapeHtml(item.machine || '-')}</td>
@@ -245,7 +776,6 @@
         `).join('');
     }
 
-    // ===== 删除待入仓记录 =====
     window.deletePendingIn = async function(tagId) {
         if (!confirm('确定删除此待入仓记录吗？')) return;
         await supabase.from('tag_records').delete().eq('tag_id', tagId);
@@ -254,25 +784,20 @@
         loadSummary();
     };
 
-    // ===== 确认入仓 =====
     window.confirmIn = async function() {
         const cbs = document.querySelectorAll('.pending-in-cb:checked');
         if (cbs.length === 0) { showToast('请勾选要入仓的记录'); return; }
         if (!confirm('确认入仓 ' + cbs.length + ' 个产品吗？')) return;
-
         let success = 0;
         for (const cb of cbs) {
             const tagId = cb.getAttribute('data-id');
             const { data: tag } = await supabase.from('tag_records').select('*').eq('tag_id', tagId).single();
             if (tag && tag.status === '待入仓') {
-                // 更新状态为已入仓
                 await supabase.from('tag_records').update({ 
                     status: '已入仓', 
                     in_time: new Date().toISOString() 
                 }).eq('tag_id', tagId);
-                // 更新库存
                 await updateStock(tag.spec, tag.color, tag.batch, tag.qty, tag.net);
-                // 插入入仓记录
                 await supabase.from('in_records').insert({
                     unique_id: tagId,
                     spec: tag.spec,
@@ -295,7 +820,7 @@
         loadSummary();
     };
 
-    // ===== 加载全部记录（已入仓 + 已出库） =====
+    // ===== 全部记录（已入仓+已出库） =====
     async function loadAllRecords() {
         const { data } = await supabase.from('tag_records')
             .select('*')
@@ -327,25 +852,20 @@
                     <td>${escapeHtml(item.batch || '-')}</td>
                     <td>${item.created_at ? new Date(item.created_at).toLocaleString() : '-'}</td>
                     <td>${escapeHtml(item.tag_id)}</td>
-                    <td>
-                        <button class="btn btn-sm btn-danger" onclick="window.deleteAllRecord('${escapeHtml(item.tag_id)}')">删除</button>
-                    </td>
+                    <td><button class="btn btn-sm btn-danger" onclick="window.deleteAllRecord('${escapeHtml(item.tag_id)}')">删除</button></td>
                 </tr>
             `;
         }).join('');
     }
 
-    // ===== 删除全部记录中的条目（已入仓或已出库） =====
     window.deleteAllRecord = async function(tagId) {
         if (!confirm('确定删除此记录吗？将同步回滚库存！')) return;
         const { data: tag } = await supabase.from('tag_records').select('*').eq('tag_id', tagId).single();
         if (!tag) { showToast('记录不存在'); return; }
-        // 如果是已入仓，回滚库存
         if (tag.status === '已入仓') {
             await updateStock(tag.spec, tag.color, tag.batch, -tag.qty, -tag.net);
             await supabase.from('in_records').delete().eq('unique_id', tagId);
         }
-        // 如果是已出库，回滚库存（出库时已扣减，删除时加回来）
         if (tag.status === '已出库') {
             await updateStock(tag.spec, tag.color, tag.batch, tag.qty, tag.net);
             await supabase.from('out_records').delete().eq('unique_id', tagId);
@@ -356,7 +876,6 @@
         loadSummary();
     };
 
-    // ===== 批量删除全部记录 =====
     window.batchDeleteAllRecords = async function() {
         const cbs = document.querySelectorAll('.all-records-cb:checked');
         if (cbs.length === 0) { showToast('请勾选要删除的记录'); return; }
@@ -385,12 +904,7 @@
 
     // ===== 查看汇总弹窗 =====
     function showSummaryModal(records, title) {
-        if (!records || records.length === 0) {
-            showToast('没有选中的记录');
-            return;
-        }
-
-        // 按规格+批号分组
+        if (!records || records.length === 0) { showToast('没有选中的记录'); return; }
         const groups = {};
         records.forEach(r => {
             const key = r.spec + '|' + (r.batch || '');
@@ -402,7 +916,6 @@
             groups[key].net += (r.net || 0);
             groups[key].count += 1;
         });
-
         const groupArray = Object.values(groups);
         let totalGross = 0, totalQty = 0, totalNet = 0, totalCount = 0;
         let rows = groupArray.map(g => {
@@ -421,7 +934,6 @@
                 </tr>
             `;
         }).join('');
-
         const overlay = document.createElement('div');
         overlay.className = 'modal-overlay';
         overlay.innerHTML = `
@@ -460,7 +972,6 @@
         document.body.appendChild(overlay);
     }
 
-    // ===== 待入仓查看汇总 =====
     window.viewPendingInSummary = function() {
         const cbs = document.querySelectorAll('.pending-in-cb:checked');
         if (cbs.length === 0) { showToast('请勾选记录'); return; }
@@ -479,7 +990,6 @@
         showSummaryModal(records, '待入仓汇总');
     };
 
-    // ===== 全部记录查看汇总 =====
     window.viewAllRecordsSummary = function() {
         const cbs = document.querySelectorAll('.all-records-cb:checked');
         if (cbs.length === 0) { showToast('请勾选记录'); return; }
@@ -498,13 +1008,23 @@
         showSummaryModal(records, '已选记录汇总');
     };
 
-    // ===== 全选/取消全选 =====
     window.toggleAll = function(selector, checked) {
         document.querySelectorAll(selector).forEach(cb => cb.checked = checked);
     };
 
+    // ===== 计算净重 =====
+    function calcNet() {
+        let gross = parseFloat(document.getElementById('gross')?.value) || 0;
+        let tong = parseFloat(document.getElementById('tong')?.value) || 0;
+        let box = parseFloat(document.getElementById('box')?.value) || 0;
+        let net = Math.max(0, gross - tong - box);
+        if (document.getElementById('netDisplay')) document.getElementById('netDisplay').innerText = net.toFixed(2);
+        return net;
+    }
+
     // ===== 渲染 =====
     function render() {
+        const printCached = loadPrintCache();
         document.getElementById('app').innerHTML = `
             <div class="container">
                 <div class="header">
@@ -525,7 +1045,66 @@
                     <div class="tab ${currentTab === 'out' ? 'active' : ''}" data-tab="out">📤 出仓记录</div>
                 </div>
                 <div class="main-content">
-                    <!-- ===== 入仓记录面板 ===== -->
+
+                    <!-- ===== 打印标签 ===== -->
+                    <div id="printPanel" class="panel ${currentTab === 'print' ? 'active' : ''}">
+                        <div class="form-grid print-grid">
+                            <div class="form-group"><label>规格 *</label><input type="text" id="spec" value="${printCached?.spec || ''}" autocomplete="off"></div>
+                            <div class="form-group"><label>色号</label><input type="text" id="color" value="${printCached?.color || ''}" autocomplete="off"></div>
+                            <div class="form-group"><label>机号 *</label><input type="text" id="machine" value="${printCached?.machine || ''}" autocomplete="off"></div>
+                            <div class="form-group"><label>毛重(kg) *</label><input type="number" step="0.01" id="gross" value="" placeholder="请输入毛重" autocomplete="off"></div>
+                            <div class="form-group"><label>数量 *</label><input type="number" id="qty" value="${printCached?.qty || ''}" autocomplete="off"></div>
+                            <div class="form-group"><label>筒重(kg) *</label><input type="number" step="0.01" id="tong" value="${printCached?.tong || ''}" autocomplete="off"></div>
+                            <div class="form-group"><label>箱重(kg) *</label><input type="number" step="0.01" id="box" value="${printCached?.box || ''}" autocomplete="off"></div>
+                            <div class="form-group"><label>打包 *</label><input type="text" id="handler" value="${printCached?.handler || ''}" autocomplete="off"></div>
+                            <div class="form-group"><label>批号</label><input type="text" id="batch" value="${printCached?.batch || ''}" autocomplete="off"></div>
+                        </div>
+                        <div class="net-weight-display print-net">⚖️ 净重：<span id="netDisplay">0.00</span> kg (毛重-筒重-箱重)</div>
+                        <button class="btn btn-success btn-print" id="printBtn">🖨️ 打印标签（待入仓）</button>
+                        <div style="margin-top:20px;padding:16px;background:#f5f5f5;border-radius:12px;border:1px dashed #aaa;">
+                            <div style="font-weight:bold;margin-bottom:12px;color:#1f6e8c;">🔄 补打损坏标签</div>
+                            <div class="flex-row"><input type="text" id="repairTagId" placeholder="输入或扫描原标签ID..." style="flex:2;padding:10px;border-radius:8px;border:1px solid #ddd;min-width:200px;font-size:16px;" autocomplete="off"><button class="btn" id="searchAndReprintBtn">🔍 查询并补打</button></div>
+                            <p style="font-size:12px;color:#666;margin-top:10px;">💡 提示：扫码枪扫损坏标签自动填入ID，或从入仓记录点击"补打"</p>
+                        </div>
+                    </div>
+
+                    <!-- ===== 扫码出库 ===== -->
+                    <div id="scanPanel" class="panel ${currentTab === 'scan' ? 'active' : ''}">
+                        <div class="form-group" style="max-width:500px"><label>扫描二维码（扫码枪输入）</label><input type="text" id="scanInput" placeholder="扫描或输入标签ID..." style="padding:14px;font-size:18px;border-radius:10px;border:2px solid #1f6e8c;" autocomplete="off"></div>
+                        <button class="btn btn-success" id="pcConfirmBtn" style="margin-top:15px;padding:12px 40px;font-size:16px;">✅ 转为待出库</button>
+                        <div style="margin-top:15px;padding:12px;background:#f0f6fa;border-radius:12px;"><p>💡 扫码枪扫描标签二维码后，自动转为待出库</p></div>
+                    </div>
+
+                    <!-- ===== 库存管理 ===== -->
+                    <div id="stockPanel" class="panel ${currentTab === 'stock' ? 'active' : ''}">
+                        <div class="sub-tab-bar">
+                            <div class="sub-tab ${currentSubTab === 'current' ? 'active' : ''}" data-subtab="current">📦 当前库存</div>
+                            <div class="sub-tab ${currentSubTab === 'pending' ? 'active' : ''}" data-subtab="pending">⏳ 待出库列表 <span id="pendingCount" style="background:#e65100;color:white;border-radius:50%;padding:0 8px;font-size:12px;">0</span></div>
+                        </div>
+                        <div id="currentStockPanel" style="display: ${currentSubTab === 'current' ? 'block' : 'none'};">
+                            <div class="search-bar"><input type="text" id="stockSearch" placeholder="搜索规格/色号/批号..." autocomplete="off"><button class="btn" id="refreshStockBtn">刷新</button></div>
+                            <div id="stockList"></div>
+                        </div>
+                        <div id="pendingStockPanel" style="display: ${currentSubTab === 'pending' ? 'block' : 'none'};">
+                            <div id="pendingSummary" class="pending-summary"></div>
+                            <div class="batch-bar">
+                                <div class="flex-row">
+                                    <button class="btn btn-success" id="batchOutBtn">📦 批量出库</button>
+                                    <button class="select-all-btn" id="selectAllPendingBtn">✅ 全选</button>
+                                    <button class="select-all-btn grey" id="deselectAllPendingBtn">⬜ 取消全选</button>
+                                </div>
+                                <span style="color:#666;font-size:13px;">勾选后点击批量出库，扣减库存并记录</span>
+                            </div>
+                            <div class="table-wrapper">
+                                <table class="data-table">
+                                    <thead><tr><th style="width:30px"><input type="checkbox" id="selectAllPending"></th><th>状态</th><th>规格</th><th>色号</th><th>机号</th><th>毛重</th><th>数量</th><th>筒重</th><th>箱重</th><th>净重</th><th>批号</th><th>扫码时间</th><th>标签ID</th><th>操作</th></tr></thead>
+                                    <tbody id="pendingTableBody"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ===== 入仓记录 ===== -->
                     <div id="inPanel" class="panel ${currentTab === 'in' ? 'active' : ''}">
                         <div class="sub-tab-bar">
                             <div class="sub-tab ${currentSubTab === 'pending' ? 'active' : ''}" data-subtab="pending">⏳ 待入仓 <span id="pendingInCount" style="background:#e65100;color:white;border-radius:50%;padding:0 8px;font-size:12px;">0</span></div>
@@ -537,32 +1116,15 @@
                             <div id="pendingInSummary" class="pending-summary">加载中...</div>
                             <div class="batch-bar">
                                 <div class="flex-row">
-                                    <button class="btn btn-success" onclick="window.confirmIn()">✅ 确认入仓</button>
-                                    <button class="select-all-btn" onclick="window.toggleAll('.pending-in-cb', true)">全选</button>
-                                    <button class="select-all-btn grey" onclick="window.toggleAll('.pending-in-cb', false)">取消全选</button>
-                                    <button class="btn btn-outline" onclick="window.viewPendingInSummary()">📊 查看汇总</button>
+                                    <button class="btn btn-success" id="confirmInBtn">✅ 确认入仓</button>
+                                    <button class="select-all-btn" id="selectAllPendingInBtn">✅ 全选</button>
+                                    <button class="select-all-btn grey" id="deselectAllPendingInBtn">⬜ 取消全选</button>
+                                    <button class="btn btn-outline" id="viewPendingInSummaryBtn">📊 查看汇总</button>
                                 </div>
                             </div>
                             <div class="table-wrapper">
                                 <table class="data-table">
-                                    <thead>
-                                        <tr>
-                                            <th style="width:30px"><input type="checkbox" id="selectAllPendingIn" onchange="window.toggleAll('.pending-in-cb', this.checked)"></th>
-                                            <th>状态</th>
-                                            <th>规格</th>
-                                            <th>色号</th>
-                                            <th>机号</th>
-                                            <th>毛重</th>
-                                            <th>数量</th>
-                                            <th>筒重</th>
-                                            <th>箱重</th>
-                                            <th>净重</th>
-                                            <th>批号</th>
-                                            <th>日期</th>
-                                            <th>标签ID</th>
-                                            <th>操作</th>
-                                        </tr>
-                                    </thead>
+                                    <thead><tr><th style="width:30px"><input type="checkbox" id="selectAllPendingIn"></th><th>状态</th><th>规格</th><th>色号</th><th>机号</th><th>毛重</th><th>数量</th><th>筒重</th><th>箱重</th><th>净重</th><th>批号</th><th>日期</th><th>标签ID</th><th>操作</th></tr></thead>
                                     <tbody id="pendingInTableBody"></tbody>
                                 </table>
                             </div>
@@ -572,74 +1134,384 @@
                         <div id="allRecordsPanel" style="display: ${currentSubTab === 'all' ? 'block' : 'none'};">
                             <div class="batch-bar">
                                 <div class="flex-row">
-                                    <button class="btn btn-danger" onclick="window.batchDeleteAllRecords()">🗑️ 批量删除</button>
-                                    <button class="select-all-btn" onclick="window.toggleAll('.all-records-cb', true)">全选</button>
-                                    <button class="select-all-btn grey" onclick="window.toggleAll('.all-records-cb', false)">取消全选</button>
-                                    <button class="btn btn-outline" onclick="window.viewAllRecordsSummary()">📊 查看汇总</button>
+                                    <button class="btn btn-danger" id="batchDeleteAllRecordsBtn">🗑️ 批量删除</button>
+                                    <button class="select-all-btn" id="selectAllRecordsBtn">✅ 全选</button>
+                                    <button class="select-all-btn grey" id="deselectAllRecordsBtn">⬜ 取消全选</button>
+                                    <button class="btn btn-outline" id="viewAllRecordsSummaryBtn">📊 查看汇总</button>
                                 </div>
                             </div>
                             <div class="table-wrapper">
                                 <table class="data-table">
-                                    <thead>
-                                        <tr>
-                                            <th style="width:30px"><input type="checkbox" id="selectAllRecords" onchange="window.toggleAll('.all-records-cb', this.checked)"></th>
-                                            <th>状态</th>
-                                            <th>规格</th>
-                                            <th>色号</th>
-                                            <th>机号</th>
-                                            <th>毛重</th>
-                                            <th>数量</th>
-                                            <th>筒重</th>
-                                            <th>箱重</th>
-                                            <th>净重</th>
-                                            <th>批号</th>
-                                            <th>日期</th>
-                                            <th>标签ID</th>
-                                            <th>操作</th>
-                                        </tr>
-                                    </thead>
+                                    <thead><tr><th style="width:30px"><input type="checkbox" id="selectAllRecords"></th><th>状态</th><th>规格</th><th>色号</th><th>机号</th><th>毛重</th><th>数量</th><th>筒重</th><th>箱重</th><th>净重</th><th>批号</th><th>日期</th><th>标签ID</th><th>操作</th></tr></thead>
                                     <tbody id="allRecordsTableBody"></tbody>
                                 </table>
                             </div>
                         </div>
                     </div>
 
-                    <!-- 其他面板占位 -->
-                    <div id="printPanel" class="panel ${currentTab === 'print' ? 'active' : ''}"><p style="color:#999;padding:40px;text-align:center;">打印标签面板（已隐藏，请使用入仓记录管理）</p></div>
-                    <div id="scanPanel" class="panel ${currentTab === 'scan' ? 'active' : ''}"><p style="color:#999;padding:40px;text-align:center;">扫码出库面板（已隐藏）</p></div>
-                    <div id="stockPanel" class="panel ${currentTab === 'stock' ? 'active' : ''}"><p style="color:#999;padding:40px;text-align:center;">库存管理面板（已隐藏）</p></div>
-                    <div id="outPanel" class="panel ${currentTab === 'out' ? 'active' : ''}"><p style="color:#999;padding:40px;text-align:center;">出仓记录面板（已隐藏）</p></div>
+                    <!-- ===== 出仓记录 ===== -->
+                    <div id="outPanel" class="panel ${currentTab === 'out' ? 'active' : ''}">
+                        <div class="batch-bar">
+                            <div class="flex-row">
+                                <button class="btn btn-success" id="exportSelectedOutBtn">📎 导出选中</button>
+                                <button class="btn" id="exportAllOutBtn">📎 导出全部</button>
+                                <button class="btn btn-export" id="exportDeliveryBtn">📋 导出送货明细</button>
+                                <button class="select-all-btn" id="selectAllOutBtn">✅ 全选</button>
+                                <button class="select-all-btn grey" id="deselectAllOutBtn">⬜ 取消全选</button>
+                            </div>
+                            <div class="flex-row">
+                                <label style="font-size:13px;">从</label><input type="date" id="outDateFrom" style="padding:4px 8px;border:1px solid #ddd;border-radius:6px;" autocomplete="off">
+                                <label style="font-size:13px;">到</label><input type="date" id="outDateTo" style="padding:4px 8px;border:1px solid #ddd;border-radius:6px;" autocomplete="off">
+                                <button class="btn btn-sm" id="filterOutBtn">筛选</button>
+                                <button class="btn btn-sm" id="clearOutFilterBtn">清除</button>
+                            </div>
+                        </div>
+                        <div class="search-bar"><input type="text" id="outSearch" placeholder="搜索规格/色号/批号..." autocomplete="off"><button class="btn" id="searchOutBtn">搜索</button><button class="btn" id="refreshOutBtn">全部</button></div>
+                        <div class="table-wrapper">
+                            <table class="data-table">
+                                <thead><tr><th>规格</th><th>色号</th><th>机号</th><th>毛重</th><th>数量</th><th>筒重</th><th>箱重</th><th>净重</th><th>批号</th><th>日期</th><th style="width:30px"><input type="checkbox" id="selectAllOut"></th><th>标签ID</th></tr></thead>
+                                <tbody id="outTableBody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+
                 </div>
             </div>
+            <div class="clear-all-tiny"><button class="btn" id="clearAllBtn" title="清空所有数据（需密码）">🗑️</button></div>
         `;
 
-        // 绑定Tab切换
+        // 绑定事件
+        bindEvents();
+    }
+
+    function bindEvents() {
+        // Tab切换
         document.querySelectorAll('.tab').forEach(tab => {
             tab.addEventListener('click', () => {
                 currentTab = tab.dataset.tab;
                 currentSubTab = 'pending';
                 render();
+                if (currentTab === 'print') {
+                    const cached = loadPrintCache();
+                    if (cached) fillPrintForm(cached);
+                }
+                if (currentTab === 'stock') {
+                    if (currentSubTab === 'current') loadStock();
+                    else loadPendingList();
+                }
+                if (currentTab === 'in') {
+                    if (currentSubTab === 'pending') loadPendingInList();
+                    else loadAllRecords();
+                }
+                if (currentTab === 'out') loadOutRecords();
             });
         });
 
+        // 子Tab切换
         document.querySelectorAll('.sub-tab').forEach(tab => {
             tab.addEventListener('click', () => {
                 currentSubTab = tab.dataset.subtab;
                 render();
-                if (currentSubTab === 'pending') {
-                    loadPendingInList();
-                } else {
-                    loadAllRecords();
+                if (currentTab === 'stock') {
+                    if (currentSubTab === 'current') loadStock();
+                    else loadPendingList();
+                }
+                if (currentTab === 'in') {
+                    if (currentSubTab === 'pending') loadPendingInList();
+                    else loadAllRecords();
                 }
             });
         });
 
-        // 加载数据
-        loadSummary();
-        if (currentSubTab === 'pending') {
+        // ===== 打印标签 =====
+        document.getElementById('gross')?.addEventListener('input', calcNet);
+        document.getElementById('tong')?.addEventListener('input', calcNet);
+        document.getElementById('box')?.addEventListener('input', calcNet);
+        calcNet();
+
+        document.getElementById('printBtn')?.addEventListener('click', async () => {
+            const spec = document.getElementById('spec').value.trim();
+            const color = document.getElementById('color').value.trim();
+            const machine = document.getElementById('machine').value.trim();
+            const qty = parseFloat(document.getElementById('qty').value);
+            const gross = parseFloat(document.getElementById('gross').value);
+            const tong = parseFloat(document.getElementById('tong').value) || 0;
+            const box = parseFloat(document.getElementById('box').value) || 0;
+            const handler = document.getElementById('handler').value.trim();
+            const batch = document.getElementById('batch').value.trim();
+            
+            if (!spec || !machine || !qty || !gross || !handler) {
+                showToast('请填写所有带*的字段');
+                return;
+            }
+            const net = gross - tong - box;
+            if (net <= 0) { showToast('净重计算错误'); return; }
+            
+            const cacheData = { spec, color, machine, qty, tong, box, handler, batch };
+            savePrintCache(cacheData);
+            
+            const tagId = generateTagId();
+            const date = new Date().toISOString().slice(0,10);
+            
+            // 状态为"待入仓"，不入库
+            const { error: tagError } = await supabase.from('tag_records').insert({ 
+                tag_id: tagId, spec, color, machine, qty, gross, tong, box, net, 
+                handler, batch, date, status: '待入仓', created_at: new Date().toISOString() 
+            });
+            if (tagError) { showToast('保存失败: ' + tagError.message); return; }
+            
+            await printLabel(tagId, { spec, color, machine, qty, gross, tong, box, net, handler, batch });
+            
+            showToast('✅ 打印成功！标签ID: ' + tagId + ' (状态: 待入仓)');
+            document.getElementById('gross').value = '';
+            calcNet();
             loadPendingInList();
-        } else {
+            loadSummary();
+        });
+
+        document.getElementById('searchAndReprintBtn')?.addEventListener('click', async () => {
+            const tagId = document.getElementById('repairTagId').value.trim();
+            if (!tagId) { showToast('请输入标签ID'); return; }
+            await reprintTag(tagId);
+            document.getElementById('repairTagId').value = '';
+        });
+
+        document.getElementById('repairTagId')?.addEventListener('keypress', async (e) => {
+            if (e.key === 'Enter') {
+                const tagId = e.target.value.trim();
+                if (tagId) await reprintTag(tagId);
+                e.target.value = '';
+            }
+        });
+
+        // ===== 扫码出库 =====
+        const pcConfirmBtn = document.getElementById('pcConfirmBtn');
+        const scanInput = document.getElementById('scanInput');
+        if (pcConfirmBtn && scanInput) {
+            function clearScanInput() { scanInput.value = ''; scanInput.focus(); }
+            pcConfirmBtn.onclick = async () => {
+                let tagId = scanInput.value.trim();
+                if (!tagId) { showToast('请扫描二维码'); clearScanInput(); return; }
+                tagId = tagId.split('\n')[0];
+                try {
+                    const { data: tag, error } = await supabase.from('tag_records').select('*').eq('tag_id', tagId).single();
+                    if (error || !tag) { showToast('❌ 未找到产品'); clearScanInput(); return; }
+                    if (tag.status !== '已入仓') {
+                        showToast('⚠️ 该产品状态为: ' + tag.status + '，只能从已入仓转为待出库');
+                        clearScanInput();
+                        return;
+                    }
+                    await supabase.from('tag_records').update({ status: '待出库', pending_time: new Date().toISOString() }).eq('tag_id', tagId);
+                    showToast('✅ 已转为待出库');
+                    clearScanInput();
+                    loadPendingList();
+                    loadSummary();
+                } catch (err) { showToast('❌ 操作失败: ' + err.message); clearScanInput(); }
+            };
+            scanInput.addEventListener('input', function() {
+                clearTimeout(scanTimer);
+                const val = this.value.trim();
+                if (val && val.startsWith('TAG')) {
+                    scanTimer = setTimeout(() => { pcConfirmBtn.click(); }, 300);
+                }
+            });
+            scanInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') pcConfirmBtn.click();
+            });
+        }
+
+        // ===== 批量出库 =====
+        document.getElementById('batchOutBtn')?.addEventListener('click', async () => {
+            const cbs = document.querySelectorAll('.pending-cb:checked');
+            if (cbs.length === 0) { showToast('请勾选要出库的产品'); return; }
+            if (!confirm('确认出库 ' + cbs.length + ' 个产品吗？')) return;
+            let success = 0;
+            const outRecords = [];
+            for (const cb of cbs) {
+                const tagId = cb.getAttribute('data-id');
+                const { data: tag } = await supabase.from('tag_records').select('*').eq('tag_id', tagId).single();
+                if (tag && tag.status === '待出库') {
+                    await supabase.from('tag_records').update({ status: '已出库', out_time: new Date().toISOString() }).eq('tag_id', tagId);
+                    await supabase.from('out_records').insert({
+                        unique_id: tagId, spec: tag.spec, color_no: tag.color, machine_no: tag.machine,
+                        quantity: tag.qty, gross_weight: tag.gross, tube_weight: tag.tong, box_weight: tag.box,
+                        net_weight: tag.net, batch_no: tag.batch, out_date: new Date().toLocaleString()
+                    });
+                    await updateStock(tag.spec, tag.color, tag.batch, -tag.qty, -tag.net);
+                    success++;
+                    outRecords.push({
+                        spec: tag.spec, color: tag.color, color_no: tag.color,
+                        machine: tag.machine, qty: tag.qty, gross: tag.gross,
+                        tong: tag.tong, box: tag.box, net: tag.net, batch: tag.batch
+                    });
+                }
+            }
+            showToast('✅ 批量出库完成！成功: ' + success);
+            loadPendingList();
+            loadStock();
+            loadSummary();
             loadAllRecords();
+            if (outRecords.length > 0) {
+                showConfirmPrintDialog(outRecords);
+            }
+        });
+
+        // ===== 待出库全选 =====
+        document.getElementById('selectAllPendingBtn')?.addEventListener('click', () => {
+            document.querySelectorAll('.pending-cb').forEach(cb => cb.checked = true);
+        });
+        document.getElementById('deselectAllPendingBtn')?.addEventListener('click', () => {
+            document.querySelectorAll('.pending-cb').forEach(cb => cb.checked = false);
+        });
+        document.getElementById('selectAllPending')?.addEventListener('change', function() {
+            document.querySelectorAll('.pending-cb').forEach(cb => cb.checked = this.checked);
+        });
+
+        // ===== 入仓记录 - 待入仓 =====
+        document.getElementById('confirmInBtn')?.addEventListener('click', window.confirmIn);
+        document.getElementById('selectAllPendingInBtn')?.addEventListener('click', () => {
+            document.querySelectorAll('.pending-in-cb').forEach(cb => cb.checked = true);
+        });
+        document.getElementById('deselectAllPendingInBtn')?.addEventListener('click', () => {
+            document.querySelectorAll('.pending-in-cb').forEach(cb => cb.checked = false);
+        });
+        document.getElementById('selectAllPendingIn')?.addEventListener('change', function() {
+            document.querySelectorAll('.pending-in-cb').forEach(cb => cb.checked = this.checked);
+        });
+        document.getElementById('viewPendingInSummaryBtn')?.addEventListener('click', window.viewPendingInSummary);
+
+        // ===== 入仓记录 - 全部记录 =====
+        document.getElementById('batchDeleteAllRecordsBtn')?.addEventListener('click', window.batchDeleteAllRecords);
+        document.getElementById('selectAllRecordsBtn')?.addEventListener('click', () => {
+            document.querySelectorAll('.all-records-cb').forEach(cb => cb.checked = true);
+        });
+        document.getElementById('deselectAllRecordsBtn')?.addEventListener('click', () => {
+            document.querySelectorAll('.all-records-cb').forEach(cb => cb.checked = false);
+        });
+        document.getElementById('selectAllRecords')?.addEventListener('change', function() {
+            document.querySelectorAll('.all-records-cb').forEach(cb => cb.checked = this.checked);
+        });
+        document.getElementById('viewAllRecordsSummaryBtn')?.addEventListener('click', window.viewAllRecordsSummary);
+
+        // ===== 出仓记录 =====
+        document.getElementById('exportSelectedOutBtn')?.addEventListener('click', () => {
+            const cbs = document.querySelectorAll('.out-cb:checked');
+            if (cbs.length === 0) { showToast('请勾选要导出的记录'); return; }
+            const ids = new Set();
+            cbs.forEach(cb => ids.add(cb.getAttribute('data-id')));
+            const selected = outDataCache.filter(r => ids.has(r.unique_id));
+            if (!selected.length) { showToast('未找到选中数据'); return; }
+            exportToCSV(selected, '出库记录_选中_' + new Date().toISOString().slice(0,10) + '.csv', [
+                { key: 'spec', title: '规格' }, { key: 'color_no', title: '色号' },
+                { key: 'machine_no', title: '机号' }, { key: 'gross_weight', title: '毛重(kg)' },
+                { key: 'quantity', title: '数量' }, { key: 'tube_weight', title: '筒重(kg)' },
+                { key: 'box_weight', title: '箱重(kg)' }, { key: 'net_weight', title: '净重(kg)' },
+                { key: 'batch_no', title: '批号' }, { key: 'out_date', title: '出库日期' },
+                { key: 'unique_id', title: '标签ID' }
+            ]);
+        });
+
+        document.getElementById('exportAllOutBtn')?.addEventListener('click', () => {
+            const search = document.getElementById('outSearch')?.value.toLowerCase() || '';
+            let data = outDataCache;
+            if (search) {
+                data = data.filter(r => 
+                    (r.spec || '').toLowerCase().includes(search) ||
+                    (r.color_no || '').toLowerCase().includes(search) ||
+                    (r.batch_no || '').toLowerCase().includes(search) ||
+                    (r.unique_id || '').toLowerCase().includes(search)
+                );
+            }
+            if (!data.length) { showToast('没有数据可导出'); return; }
+            exportToCSV(data, '出库记录_全部_' + new Date().toISOString().slice(0,10) + '.csv', [
+                { key: 'spec', title: '规格' }, { key: 'color_no', title: '色号' },
+                { key: 'machine_no', title: '机号' }, { key: 'gross_weight', title: '毛重(kg)' },
+                { key: 'quantity', title: '数量' }, { key: 'tube_weight', title: '筒重(kg)' },
+                { key: 'box_weight', title: '箱重(kg)' }, { key: 'net_weight', title: '净重(kg)' },
+                { key: 'batch_no', title: '批号' }, { key: 'out_date', title: '出库日期' },
+                { key: 'unique_id', title: '标签ID' }
+            ]);
+        });
+
+        document.getElementById('exportDeliveryBtn')?.addEventListener('click', () => {
+            const cbs = document.querySelectorAll('.out-cb:checked');
+            if (cbs.length === 0) { showToast('请先勾选要导出的记录'); return; }
+            const ids = new Set();
+            cbs.forEach(cb => ids.add(cb.getAttribute('data-id')));
+            const selected = outDataCache.filter(r => ids.has(r.unique_id));
+            if (!selected.length) { showToast('未找到选中数据'); return; }
+            const records = selected.map(r => ({
+                spec: r.spec, color: r.color_no, color_no: r.color_no,
+                machine: r.machine_no, qty: r.quantity,
+                gross: r.gross_weight, tong: r.tube_weight,
+                box: r.box_weight, net: r.net_weight, batch: r.batch_no
+            }));
+            showCustomerModalAndExport(records);
+        });
+
+        document.getElementById('selectAllOutBtn')?.addEventListener('click', () => {
+            document.querySelectorAll('.out-cb').forEach(cb => cb.checked = true);
+        });
+        document.getElementById('deselectAllOutBtn')?.addEventListener('click', () => {
+            document.querySelectorAll('.out-cb').forEach(cb => cb.checked = false);
+        });
+        document.getElementById('selectAllOut')?.addEventListener('change', function() {
+            document.querySelectorAll('.out-cb').forEach(cb => cb.checked = this.checked);
+        });
+
+        document.getElementById('filterOutBtn')?.addEventListener('click', () => {
+            const from = document.getElementById('outDateFrom').value;
+            const to = document.getElementById('outDateTo').value;
+            let filtered = outDataCache;
+            if (from) filtered = filtered.filter(r => (r.created_at || '').slice(0,10) >= from);
+            if (to) filtered = filtered.filter(r => (r.created_at || '').slice(0,10) <= to);
+            const tbody = document.getElementById('outTableBody');
+            if (!filtered.length) {
+                tbody.innerHTML = '<tr class="empty-row"><td colspan="12">无匹配记录</td></tr>';
+                return;
+            }
+            tbody.innerHTML = filtered.map(r => `
+                <tr><td>${escapeHtml(r.spec||'-')}</td><td>${escapeHtml(r.color_no||'-')}</td><td>${escapeHtml(r.machine_no||'-')}</td>
+                <td>${r.gross_weight ? r.gross_weight+'kg' : '-'}</td><td>${r.quantity||'-'}</td>
+                <td>${r.tube_weight ? r.tube_weight+'kg' : '-'}</td><td>${r.box_weight ? r.box_weight+'kg' : '-'}</td>
+                <td>${r.net_weight ? r.net_weight+'kg' : '-'}</td><td>${escapeHtml(r.batch_no||'-')}</td>
+                <td>${r.out_date||'-'}</td>
+                <td><input type="checkbox" class="out-cb" data-id="${escapeHtml(r.unique_id)}"></td>
+                <td>${escapeHtml(r.unique_id||'-')}</td></tr>
+            `).join('');
+        });
+        document.getElementById('clearOutFilterBtn')?.addEventListener('click', () => {
+            document.getElementById('outDateFrom').value = '';
+            document.getElementById('outDateTo').value = '';
+            loadOutRecords();
+        });
+
+        document.getElementById('searchOutBtn')?.addEventListener('click', loadOutRecords);
+        document.getElementById('refreshOutBtn')?.addEventListener('click', loadOutRecords);
+        document.getElementById('refreshStockBtn')?.addEventListener('click', loadStock);
+        document.getElementById('stockSearch')?.addEventListener('input', loadStock);
+        document.getElementById('clearAllBtn')?.addEventListener('click', clearAllData);
+
+        window.cancelPendingFromGlobal = cancelPending;
+        window.reprintTagFromGlobal = async (tagId) => { await reprintTag(tagId); loadInRecords(); };
+        window.deleteInRecordFromGlobal = async (tagId) => { await deleteInRecord(tagId); };
+
+        // 加载所有数据
+        loadSummary();
+        if (currentTab === 'print') {
+            const cached = loadPrintCache();
+            if (cached) fillPrintForm(cached);
+        }
+        if (currentTab === 'stock') {
+            if (currentSubTab === 'current') loadStock();
+            else loadPendingList();
+        }
+        if (currentTab === 'in') {
+            if (currentSubTab === 'pending') loadPendingInList();
+            else loadAllRecords();
+        }
+        if (currentTab === 'out') {
+            loadOutRecords();
         }
     }
 
