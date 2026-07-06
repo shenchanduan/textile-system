@@ -29,14 +29,11 @@
         .main-content { padding: 20px; }
         .panel { display: none; }
         .panel.active { display: block; }
-
         .pending-summary { background: #fff3e0; padding: 12px 16px; border-radius: 12px; margin-bottom: 16px; display: flex; flex-wrap: wrap; gap: 20px; border-left: 4px solid #ff9800; }
         .pending-summary-item { font-size: 14px; }
         .pending-summary-item strong { color: #e65100; }
-
         .batch-bar { margin: 15px 0; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
         .flex-row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
-
         .btn { background: #1f6e8c; color: white; border: none; padding: 8px 18px; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 13px; }
         .btn-success { background: #2e7d32; }
         .btn-danger { background: #c62828; }
@@ -50,24 +47,20 @@
         .select-all-btn:hover { background: #0d47a1; }
         .select-all-btn.grey { background: #78909c; }
         .select-all-btn.grey:hover { background: #546e7a; }
-
         .form-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px; }
         .form-group { display: flex; flex-direction: column; }
         .form-group label { font-weight: bold; margin-bottom: 5px; font-size: 13px; }
         .form-group input { padding: 8px 10px; border: 1px solid #ddd; border-radius: 6px; }
-
         .table-wrapper { overflow-x: auto; margin-top: 15px; border: 1px solid #e2edf5; border-radius: 12px; max-height: 520px; overflow-y: auto; }
         .table-wrapper thead { position: sticky; top: 0; z-index: 10; }
         .data-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
         .data-table th, .data-table td { border: 1px solid #e2edf5; padding: 8px 6px; text-align: left; }
         .data-table th { background: #eef3fc; white-space: nowrap; position: sticky; top: 0; z-index: 10; }
         .data-table td { word-break: break-word; }
-
         .search-bar { display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap; align-items: center; }
         .search-bar input { padding: 8px 12px; border: 1px solid #ddd; border-radius: 20px; flex: 1; min-width: 150px; }
         .stock-item { background: #f8f9fa; padding: 12px; margin-bottom: 10px; border-radius: 8px; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 10px; }
         .net-weight-display { background: #e8f5e9; padding: 8px 12px; border-radius: 6px; font-weight: bold; margin-bottom: 15px; }
-
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; justify-content: center; align-items: center; z-index: 9999; }
         .modal-box { background: white; padding: 30px 35px; border-radius: 16px; max-width: 750px; width: 95%; max-height: 90vh; box-shadow: 0 20px 60px rgba(0,0,0,0.3); display: flex; flex-direction: column; }
         .modal-box h3 { margin-bottom: 12px; color: #1f6e8c; }
@@ -79,36 +72,29 @@
         .modal-table th, .modal-table td { border: 1px solid #e2edf5; padding: 8px 10px; text-align: left; }
         .modal-table th { background: #eef3fc; position: sticky; top: 0; z-index: 5; }
         .modal-table .total-row { background: #e8f0fe; font-weight: bold; }
-
         .password-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; justify-content: center; align-items: center; z-index: 9999; }
         .password-modal .modal-box { background: white; padding: 30px; border-radius: 16px; max-width: 380px; width: 90%; box-shadow: 0 20px 60px rgba(0,0,0,0.3); }
         .password-modal .modal-box h3 { margin-bottom: 16px; color: #c62828; }
         .password-modal .modal-box input { width: 100%; padding: 12px; border: 2px solid #ddd; border-radius: 8px; font-size: 16px; margin-bottom: 16px; }
         .password-modal .modal-box .btn-row { display: flex; gap: 10px; justify-content: flex-end; }
         .password-modal .modal-box .btn-row button { padding: 10px 24px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; }
-
         .customer-modal .modal-box input { width: 100%; padding: 12px 14px; border: 2px solid #ddd; border-radius: 8px; font-size: 16px; margin-bottom: 16px; }
         .customer-modal .modal-box input:focus { border-color: #1f6e8c; outline: none; }
-
         .toast-msg { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); background: #333; color: white; padding: 10px 20px; border-radius: 30px; z-index: 2000; animation: fadeOut 2.5s ease; }
         @keyframes fadeOut { 0% { opacity: 1; } 70% { opacity: 1; } 100% { opacity: 0; visibility: hidden; } }
-
         .status-badge { display: inline-block; padding: 2px 10px; border-radius: 12px; font-size: 12px; font-weight: 600; }
         .status-pending-in { background: #fff3e0; color: #e65100; }
         .status-in { background: #e8f5e9; color: #2e7d32; }
         .status-out { background: #fce4ec; color: #c62828; }
         .status-pending-out { background: #fff3e0; color: #e65100; }
-
         .empty-row td { text-align: center; color: #999; padding: 30px 0; }
         .print-iframe { position: absolute; width: 0; height: 0; border: none; visibility: hidden; }
         .clear-all-tiny { position: fixed; bottom: 12px; right: 16px; z-index: 999; opacity: 0.25; transition: opacity 0.2s; }
         .clear-all-tiny:hover { opacity: 0.7; }
         .clear-all-tiny .btn { font-size: 11px; padding: 4px 10px; border-radius: 4px; background: #999; color: #eee; border: none; cursor: pointer; }
-
         .print-grid .form-group label { font-size: 16px; font-weight: 700; color: #1a3a4a; }
         .print-grid .form-group input { padding: 12px 14px; font-size: 16px; border-width: 2px; border-color: #b0c8d6; border-radius: 10px; font-weight: 600; }
         .print-net { font-size: 18px; padding: 14px 18px; background: #d4edda; border-radius: 12px; border: 2px solid #2e7d32; }
-
         @media (max-width: 600px) {
             .summary-cards { gap: 8px; padding: 10px; }
             .summary-card { padding: 8px 12px; min-width: 70px; }
@@ -131,13 +117,11 @@
     const SUPABASE_URL = 'https://tdhbzdnaieqcqzmbctlx.supabase.co';
     const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRkaGJ6ZG5haWVxY3F6bWJjdGx4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEyMTY4NDEsImV4cCI6MjA5Njc5Mjg0MX0.QSYPR37gOWNJkGIOEMwKsSa6mPkSFa5bXU_JSfxLWSM';
     const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
     const ADMIN_PASSWORD = '123';
     let currentTab = 'print';
     let currentSubTab = 'pending';
     let outDataCache = [];
     let scanTimer = null;
-
     const PRINT_CACHE_KEY = 'textile_print_last_data';
 
     function savePrintCache(data) {
@@ -762,7 +746,6 @@
         loadSummary();
     };
 
-    // ★★★ 修复重点：确认入仓后强制刷新列表 ★★★
     window.confirmIn = async function() {
         const cbs = document.querySelectorAll('.pending-in-cb:checked');
         if (cbs.length === 0) { showToast('请勾选要入仓的记录'); return; }
@@ -794,18 +777,13 @@
             }
         }
         showToast('✅ 入仓完成！成功: ' + success);
-        
-        // ★★★ 强制刷新 3 次，确保 UI 更新 ★★★
         await loadPendingInList();
         await loadAllRecords();
         await loadSummary();
-        
-        // 延迟再刷一次，确保 Supabase 缓存已刷新
         setTimeout(async () => {
             await loadPendingInList();
             await loadAllRecords();
         }, 500);
-        
         setTimeout(async () => {
             await loadPendingInList();
         }, 1000);
@@ -1039,7 +1017,6 @@
                 </div>
                 <div class="main-content">
 
-                    <!-- 打印标签 -->
                     <div id="printPanel" class="panel ${currentTab === 'print' ? 'active' : ''}">
                         <div class="form-grid print-grid">
                             <div class="form-group"><label>规格 *</label><input type="text" id="spec" value="${printCached?.spec || ''}" autocomplete="off"></div>
@@ -1061,14 +1038,12 @@
                         </div>
                     </div>
 
-                    <!-- 扫码出库 -->
                     <div id="scanPanel" class="panel ${currentTab === 'scan' ? 'active' : ''}">
                         <div class="form-group" style="max-width:500px"><label>扫描二维码（扫码枪输入）</label><input type="text" id="scanInput" placeholder="扫描或输入标签ID..." style="padding:14px;font-size:18px;border-radius:10px;border:2px solid #1f6e8c;" autocomplete="off"></div>
                         <button class="btn btn-success" id="pcConfirmBtn" style="margin-top:15px;padding:12px 40px;font-size:16px;">✅ 转为待出库</button>
                         <div style="margin-top:15px;padding:12px;background:#f0f6fa;border-radius:12px;"><p>💡 扫码枪扫描标签二维码后，自动转为待出库</p></div>
                     </div>
 
-                    <!-- 库存管理 -->
                     <div id="stockPanel" class="panel ${currentTab === 'stock' ? 'active' : ''}">
                         <div class="sub-tab-bar">
                             <div class="sub-tab ${currentSubTab === 'current' ? 'active' : ''}" data-subtab="current">📦 当前库存</div>
@@ -1097,14 +1072,12 @@
                         </div>
                     </div>
 
-                    <!-- ★★★ 入仓记录 ★★★ -->
                     <div id="inPanel" class="panel ${currentTab === 'in' ? 'active' : ''}">
                         <div class="sub-tab-bar">
                             <div class="sub-tab ${currentSubTab === 'pending' ? 'active' : ''}" data-subtab="pending">⏳ 待入仓 <span id="pendingInCount" style="background:#e65100;color:white;border-radius:50%;padding:0 8px;font-size:12px;">0</span></div>
                             <div class="sub-tab ${currentSubTab === 'all' ? 'active' : ''}" data-subtab="all">📋 全部记录 <span id="allRecordsCount" style="background:#1f6e8c;color:white;border-radius:50%;padding:0 8px;font-size:12px;">0</span></div>
                         </div>
 
-                        <!-- 待入仓 -->
                         <div id="pendingInPanel" style="display: ${currentSubTab === 'pending' ? 'block' : 'none'};">
                             <div id="pendingInSummary" class="pending-summary">加载中...</div>
                             <div class="batch-bar">
@@ -1123,7 +1096,6 @@
                             </div>
                         </div>
 
-                        <!-- 全部记录 -->
                         <div id="allRecordsPanel" style="display: ${currentSubTab === 'all' ? 'block' : 'none'};">
                             <div class="batch-bar">
                                 <div class="flex-row">
@@ -1142,7 +1114,6 @@
                         </div>
                     </div>
 
-                    <!-- 出仓记录 -->
                     <div id="outPanel" class="panel ${currentTab === 'out' ? 'active' : ''}">
                         <div class="batch-bar">
                             <div class="flex-row">
@@ -1172,7 +1143,6 @@
             </div>
             <div class="clear-all-tiny"><button class="btn" id="clearAllBtn" title="清空所有数据（需密码）">🗑️</button></div>
         `;
-
         bindEvents();
     }
 
@@ -1180,7 +1150,6 @@
     // ★★★ 绑定事件 ★★★
     // ============================================================
     function bindEvents() {
-        // Tab切换
         document.querySelectorAll('.tab').forEach(tab => {
             tab.addEventListener('click', () => {
                 currentTab = tab.dataset.tab;
@@ -1202,7 +1171,6 @@
             });
         });
 
-        // 子Tab切换
         document.querySelectorAll('.sub-tab').forEach(tab => {
             tab.addEventListener('click', () => {
                 currentSubTab = tab.dataset.subtab;
@@ -1218,7 +1186,6 @@
             });
         });
 
-        // ===== 打印标签 =====
         document.getElementById('gross')?.addEventListener('input', calcNet);
         document.getElementById('tong')?.addEventListener('input', calcNet);
         document.getElementById('box')?.addEventListener('input', calcNet);
@@ -1278,7 +1245,6 @@
             }
         });
 
-        // ===== 扫码出库 =====
         const pcConfirmBtn = document.getElementById('pcConfirmBtn');
         const scanInput = document.getElementById('scanInput');
         if (pcConfirmBtn && scanInput) {
@@ -1314,7 +1280,6 @@
             });
         }
 
-        // ===== 批量出库 =====
         document.getElementById('batchOutBtn')?.addEventListener('click', async () => {
             const cbs = document.querySelectorAll('.pending-cb:checked');
             if (cbs.length === 0) { showToast('请勾选要出库的产品'); return; }
@@ -1350,7 +1315,6 @@
             }
         });
 
-        // ===== 待出库全选 =====
         document.getElementById('selectAllPendingBtn')?.addEventListener('click', () => {
             document.querySelectorAll('.pending-cb').forEach(cb => cb.checked = true);
         });
@@ -1361,7 +1325,6 @@
             document.querySelectorAll('.pending-cb').forEach(cb => cb.checked = this.checked);
         });
 
-        // ===== 入仓记录 - 待入仓 =====
         document.getElementById('confirmInBtn')?.addEventListener('click', window.confirmIn);
         document.getElementById('selectAllPendingInBtn')?.addEventListener('click', () => {
             document.querySelectorAll('.pending-in-cb').forEach(cb => cb.checked = true);
@@ -1374,7 +1337,6 @@
         });
         document.getElementById('viewPendingInSummaryBtn')?.addEventListener('click', window.viewPendingInSummary);
 
-        // ===== 入仓记录 - 全部记录 =====
         document.getElementById('batchDeleteAllRecordsBtn')?.addEventListener('click', window.batchDeleteAllRecords);
         document.getElementById('selectAllRecordsBtn')?.addEventListener('click', () => {
             document.querySelectorAll('.all-records-cb').forEach(cb => cb.checked = true);
@@ -1387,7 +1349,6 @@
         });
         document.getElementById('viewAllRecordsSummaryBtn')?.addEventListener('click', window.viewAllRecordsSummary);
 
-        // ===== 出仓记录 =====
         document.getElementById('exportSelectedOutBtn')?.addEventListener('click', () => {
             const cbs = document.querySelectorAll('.out-cb:checked');
             if (cbs.length === 0) { showToast('请勾选要导出的记录'); return; }
@@ -1490,7 +1451,6 @@
         window.reprintTagFromGlobal = async (tagId) => { await reprintTag(tagId); loadInRecords(); };
         window.deleteInRecordFromGlobal = async (tagId) => { await deleteInRecord(tagId); };
 
-        // 加载所有数据
         loadSummary();
         if (currentTab === 'print') {
             const cached = loadPrintCache();
