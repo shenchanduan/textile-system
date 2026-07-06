@@ -43,10 +43,10 @@
         .btn-export { background: #6a1b9a; }
         .btn-export:hover { background: #4a148c; }
         .net-weight-display { background: #e8f5e9; padding: 8px 12px; border-radius: 6px; font-weight: bold; margin-bottom: 15px; }
-        .table-wrapper { overflow-x: auto; margin-top: 15px; border: 1px solid #e2edf5; border-radius: 12px; }
+        .table-wrapper { overflow-x: auto; margin-top: 15px; border: 1px solid #e2edf5; border-radius: 12px; max-height: 500px; overflow-y: auto; }
         .data-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
         .data-table th, .data-table td { border: 1px solid #e2edf5; padding: 10px 8px; text-align: left; }
-        .data-table th { background: #eef3fc; white-space: nowrap; }
+        .data-table th { background: #eef3fc; white-space: nowrap; position: sticky; top: 0; z-index: 10; }
         .data-table td { word-break: break-word; }
         .search-bar { display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap; align-items: center; }
         .search-bar input { padding: 8px 12px; border: 1px solid #ddd; border-radius: 20px; flex: 1; min-width: 150px; }
@@ -97,7 +97,7 @@
         .net-weight-display.print-net { font-size: 18px; padding: 14px 18px; background: #d4edda; border-radius: 12px; border: 2px solid #2e7d32; }
         .btn-print { font-size: 18px; padding: 14px 36px; border-radius: 12px; background: #1f6e8c; }
         .btn-print:hover { background: #145a77; }
-        .customer-modal, .confirm-modal {
+        .customer-modal, .confirm-modal, .summary-modal, .confirm-in-modal {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.5);
@@ -106,19 +106,77 @@
             align-items: center;
             z-index: 9999;
         }
-        .customer-modal .modal-box, .confirm-modal .modal-box {
+        .customer-modal .modal-box, .confirm-modal .modal-box, .summary-modal .modal-box, .confirm-in-modal .modal-box {
             background: white;
             padding: 30px 35px;
             border-radius: 16px;
-            max-width: 450px;
-            width: 90%;
+            max-width: 750px;
+            width: 95%;
+            max-height: 80vh;
             box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            display: flex;
+            flex-direction: column;
         }
-        .customer-modal .modal-box h3, .confirm-modal .modal-box h3 {
+        .summary-modal .modal-box h3 {
+            margin-bottom: 8px;
+            color: #1f6e8c;
+        }
+        .summary-modal .modal-box .sub-info {
+            font-size: 14px;
+            color: #555;
+            margin-bottom: 16px;
+        }
+        .summary-modal .modal-box .table-wrap {
+            overflow-y: auto;
+            flex: 1;
+        }
+        .summary-modal .modal-box table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+        }
+        .summary-modal .modal-box table th {
+            background: #eef3fc;
+            border: 1px solid #ddd;
+            padding: 8px 10px;
+            text-align: center;
+            position: sticky;
+            top: 0;
+            z-index: 5;
+        }
+        .summary-modal .modal-box table td {
+            border: 1px solid #ddd;
+            padding: 8px 10px;
+            text-align: center;
+        }
+        .summary-modal .modal-box .total-row {
+            font-weight: bold;
+            background: #f5f7fa;
+            margin-top: 10px;
+            padding: 10px 0;
+            border-top: 2px solid #1f6e8c;
+        }
+        .summary-modal .modal-box .btn-row {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            margin-top: 16px;
+            padding-top: 12px;
+            border-top: 1px solid #eee;
+        }
+        .summary-modal .modal-box .btn-row button {
+            padding: 10px 28px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 14px;
+        }
+        .customer-modal .modal-box h3, .confirm-modal .modal-box h3, .confirm-in-modal .modal-box h3 {
             margin-bottom: 12px;
             color: #1f6e8c;
         }
-        .customer-modal .modal-box p, .confirm-modal .modal-box p {
+        .customer-modal .modal-box p, .confirm-modal .modal-box p, .confirm-in-modal .modal-box p {
             font-size: 15px;
             color: #333;
             margin-bottom: 16px;
@@ -135,12 +193,12 @@
             border-color: #1f6e8c;
             outline: none;
         }
-        .customer-modal .modal-box .btn-row, .confirm-modal .modal-box .btn-row {
+        .customer-modal .modal-box .btn-row, .confirm-modal .modal-box .btn-row, .confirm-in-modal .modal-box .btn-row {
             display: flex;
             gap: 10px;
             justify-content: flex-end;
         }
-        .customer-modal .modal-box .btn-row button, .confirm-modal .modal-box .btn-row button {
+        .customer-modal .modal-box .btn-row button, .confirm-modal .modal-box .btn-row button, .confirm-in-modal .modal-box .btn-row button {
             padding: 10px 28px;
             border: none;
             border-radius: 8px;
@@ -158,6 +216,48 @@
             color: #333;
         }
         .confirm-modal .modal-box .btn-row .btn-skip:hover { background: #ccc; }
+        .confirm-in-modal .modal-box .btn-row .btn-confirm {
+            background: #2e7d32;
+            color: white;
+        }
+        .confirm-in-modal .modal-box .btn-row .btn-confirm:hover { background: #1b5e20; }
+        .confirm-in-modal .modal-box .btn-row .btn-cancel {
+            background: #e0e0e0;
+            color: #333;
+        }
+        .confirm-in-modal .modal-box .btn-row .btn-cancel:hover { background: #ccc; }
+        .filter-bar {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            align-items: center;
+            background: #f8fafc;
+            padding: 10px 14px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #e2edf5;
+        }
+        .filter-bar label {
+            font-weight: 600;
+            font-size: 13px;
+            color: #444;
+        }
+        .filter-bar input[type="datetime-local"] {
+            padding: 6px 10px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-size: 13px;
+        }
+        .filter-bar select {
+            padding: 6px 10px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-size: 13px;
+            background: white;
+        }
+        .filter-bar .btn-sm {
+            padding: 6px 16px;
+        }
     </style>
 </head>
 <body>
@@ -173,68 +273,57 @@
     const ADMIN_PASSWORD = '123';
     let currentTab = 'print';
     let currentSubTab = 'current';
+    let currentInSubTab = 'pending';
     let outDataCache = [];
     let scanTimer = null;
+    let inRecordsCache = [];
 
-    // ===== 打印标签缓存 key =====
+    // ===== 测试数据 =====
+    function generateTestInRecords() {
+        const now = new Date();
+        const today = now.toISOString().slice(0,10);
+        const records = [
+            { unique_id: 'TAG001', spec: '32S/2', color_no: '深灰', machine_no: '8#', quantity: 120, gross_weight: 20.00, tube_weight: 2.20, box_weight: 3.10, net_weight: 14.70, batch_no: 'B20240601', in_date: today + ' 08:30:00', status: '待入仓' },
+            { unique_id: 'TAG002', spec: '32S/2', color_no: '深灰', machine_no: '8#', quantity: 120, gross_weight: 19.80, tube_weight: 2.20, box_weight: 3.10, net_weight: 14.50, batch_no: 'B20240601', in_date: today + ' 08:45:00', status: '待入仓' },
+            { unique_id: 'TAG003', spec: '40S/2', color_no: '黑色', machine_no: '12#', quantity: 80, gross_weight: 18.50, tube_weight: 2.50, box_weight: 3.00, net_weight: 13.00, batch_no: 'B20240602', in_date: today + ' 09:30:00', status: '已入仓' },
+            { unique_id: 'TAG004', spec: '40S/2', color_no: '黑色', machine_no: '12#', quantity: 80, gross_weight: 18.70, tube_weight: 2.50, box_weight: 3.00, net_weight: 13.20, batch_no: 'B20240602', in_date: today + ' 10:00:00', status: '已出库' },
+        ];
+        return records;
+    }
+    const TEST_IN_RECORDS = generateTestInRecords();
+
+    // ===== 打印缓存 =====
     const PRINT_CACHE_KEY = 'textile_print_last_data';
 
-    // ===== 保存打印数据（毛重不保存） =====
     function savePrintCache(data) {
         const toSave = { ...data };
-        delete toSave.gross; // 毛重不保存
-        try {
-            localStorage.setItem(PRINT_CACHE_KEY, JSON.stringify(toSave));
-        } catch (e) {
-            // ignore
-        }
+        delete toSave.gross;
+        try { localStorage.setItem(PRINT_CACHE_KEY, JSON.stringify(toSave)); } catch(e) {}
     }
 
-    // ===== 读取打印缓存 =====
     function loadPrintCache() {
         try {
             const raw = localStorage.getItem(PRINT_CACHE_KEY);
             if (raw) {
                 const data = JSON.parse(raw);
-                // 只返回有效字段
                 const valid = ['spec', 'color', 'machine', 'qty', 'tong', 'box', 'handler', 'batch'];
                 const result = {};
-                valid.forEach(key => {
-                    if (data[key] !== undefined && data[key] !== null && data[key] !== '') {
-                        result[key] = data[key];
-                    }
-                });
+                valid.forEach(key => { if (data[key] !== undefined && data[key] !== null && data[key] !== '') result[key] = data[key]; });
                 return result;
             }
-        } catch (e) {
-            // ignore
-        }
+        } catch(e) {}
         return null;
     }
 
-    // ===== 填充打印表单 =====
     function fillPrintForm(data) {
         if (!data) return;
-        const map = {
-            spec: 'spec',
-            color: 'color',
-            machine: 'machine',
-            qty: 'qty',
-            tong: 'tong',
-            box: 'box',
-            handler: 'handler',
-            batch: 'batch'
-        };
+        const map = { spec:'spec', color:'color', machine:'machine', qty:'qty', tong:'tong', box:'box', handler:'handler', batch:'batch' };
         Object.keys(map).forEach(key => {
             const el = document.getElementById(map[key]);
-            if (el && data[key] !== undefined && data[key] !== null) {
-                el.value = data[key];
-            }
+            if (el && data[key] !== undefined && data[key] !== null) el.value = data[key];
         });
-        // 毛重始终清空
         const grossEl = document.getElementById('gross');
         if (grossEl) grossEl.value = '';
-        // 重新计算净重
         calcNet();
     }
 
@@ -293,6 +382,7 @@
         });
     }
 
+    // ===== 生成送货明细HTML预览 =====
     function generateDeliveryPreview(records, customer) {
         if (!records || records.length === 0) {
             showToast('没有数据可导出');
@@ -561,6 +651,107 @@
         };
     }
 
+    // ===== 查看汇总弹窗 =====
+    function showSummaryModal(selectedRecords, title) {
+        if (!selectedRecords || selectedRecords.length === 0) {
+            showToast('请先勾选要汇总的记录');
+            return;
+        }
+
+        const groups = {};
+        selectedRecords.forEach(r => {
+            const key = (r.spec || '未命名') + '|' + (r.batch_no || '');
+            if (!groups[key]) {
+                groups[key] = { spec: r.spec || '未命名', batch: r.batch_no || '', qty: 0, gross: 0, net: 0, count: 0 };
+            }
+            groups[key].qty += parseFloat(r.quantity) || 0;
+            groups[key].gross += parseFloat(r.gross_weight) || 0;
+            groups[key].net += parseFloat(r.net_weight) || 0;
+            groups[key].count += 1;
+        });
+
+        let tableRows = '';
+        let totalQty = 0, totalGross = 0, totalNet = 0, totalCount = 0;
+        const groupKeys = Object.keys(groups);
+        groupKeys.forEach(key => {
+            const g = groups[key];
+            totalQty += g.qty;
+            totalGross += g.gross;
+            totalNet += g.net;
+            totalCount += g.count;
+            tableRows += `
+                <tr>
+                    <td>${escapeHtml(g.spec)}</td>
+                    <td>${escapeHtml(g.batch)}</td>
+                    <td>${g.gross.toFixed(2)}</td>
+                    <td>${g.qty}</td>
+                    <td>${g.net.toFixed(2)}</td>
+                    <td>${g.count}</td>
+                </tr>
+            `;
+        });
+
+        const overlay = document.createElement('div');
+        overlay.className = 'summary-modal';
+        overlay.innerHTML = `
+            <div class="modal-box">
+                <h3>📊 ${title || '选中记录汇总'}</h3>
+                <div class="sub-info">
+                    📌 已选 <strong>${selectedRecords.length}</strong> 条记录
+                </div>
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th style="width:20%;">规格</th>
+                                <th style="width:18%;">批号</th>
+                                <th style="width:16%;">总毛重kg</th>
+                                <th style="width:16%;">总数量</th>
+                                <th style="width:16%;">总净重kg</th>
+                                <th style="width:14%;">件数</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${tableRows}
+                        </tbody>
+                    </table>
+                </div>
+                <div class="total-row">
+                    合计：${groupKeys.length} 种型号 ｜ 总毛重 ${totalGross.toFixed(2)}kg ｜ 总数量 ${totalQty} 个 ｜ 总净重 ${totalNet.toFixed(2)}kg ｜ 共 ${totalCount} 件
+                </div>
+                <div class="btn-row">
+                    <button class="btn" onclick="this.closest('.summary-modal').remove()">关闭</button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(overlay);
+    }
+
+    // ===== 确认入仓弹窗 =====
+    function showConfirmInDialog(selectedRecords, onConfirm) {
+        if (!selectedRecords || selectedRecords.length === 0) {
+            showToast('请先勾选要确认入仓的记录');
+            return;
+        }
+        const overlay = document.createElement('div');
+        overlay.className = 'confirm-in-modal';
+        overlay.innerHTML = `
+            <div class="modal-box">
+                <h3>✅ 确认入仓</h3>
+                <p>即将确认 <strong>${selectedRecords.length}</strong> 条记录入仓，确认后将更新库存，是否继续？</p>
+                <div class="btn-row">
+                    <button class="btn-cancel" onclick="this.closest('.confirm-in-modal').remove()">取消</button>
+                    <button class="btn-confirm" id="confirmInBtn">确认入仓</button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(overlay);
+        overlay.querySelector('#confirmInBtn').onclick = () => {
+            overlay.remove();
+            onConfirm();
+        };
+    }
+
     async function printLabel(tagId, data) {
         const qrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=' + encodeURIComponent(tagId);
         const date = new Date().toISOString().slice(0,10);
@@ -665,17 +856,19 @@
     }
 
     async function batchDeleteInRecords() {
-        const cbs = document.querySelectorAll('.in-cb:checked');
+        const cbs = document.querySelectorAll('#allInPanel .in-cb:checked');
         if (cbs.length === 0) { showToast('请勾选要删除的入仓记录'); return; }
         if (!confirm('确定批量删除 ' + cbs.length + ' 条入仓记录吗？将同步删除标签并回滚库存！')) return;
         let success = 0;
         for (const cb of cbs) {
             const tagId = cb.getAttribute('data-id');
             const { data: tag } = await supabase.from('tag_records').select('*').eq('tag_id', tagId).single();
-            if (tag && tag.status === '已入库') {
+            if (tag && (tag.status === '已入库' || tag.status === '已出库')) {
                 await supabase.from('in_records').delete().eq('unique_id', tagId);
                 await supabase.from('tag_records').delete().eq('tag_id', tagId);
-                await updateStock(tag.spec, tag.color, tag.batch, -tag.qty, -tag.net);
+                if (tag.status === '已入库') {
+                    await updateStock(tag.spec, tag.color, tag.batch, -tag.qty, -tag.net);
+                }
                 success++;
             }
         }
@@ -799,30 +992,93 @@
         ).join('');
     }
 
+    // ===== 加载入仓记录（根据子标签） =====
     async function loadInRecords() {
-        const { data } = await supabase.from('in_records').select('*').order('created_at', { ascending: false });
-        const tbody = document.getElementById('inTableBody');
-        if (!data || data.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="12" style="text-align:center">暂无入仓记录</td></tr>';
-            return;
+        let query = supabase.from('in_records').select('*');
+        
+        if (currentInSubTab === 'pending') {
+            query = query.eq('status', '待入仓');
+        } else {
+            query = query.in('status', ['已入仓', '已出库']);
         }
-        tbody.innerHTML = data.map(r => 
-            '<tr>' +
-                '<td>' + escapeHtml(r.spec||'-') + '</td>' +
-                '<td>' + escapeHtml(r.color_no||'-') + '</td>' +
-                '<td>' + escapeHtml(r.machine_no||'-') + '</td>' +
-                '<td>' + (r.gross_weight ? r.gross_weight+'kg' : '-') + '</td>' +
-                '<td>' + (r.quantity||'-') + '</td>' +
-                '<td>' + (r.tube_weight ? r.tube_weight+'kg' : '-') + '</td>' +
-                '<td>' + (r.box_weight ? r.box_weight+'kg' : '-') + '</td>' +
-                '<td>' + (r.net_weight ? r.net_weight+'kg' : '-') + '</td>' +
-                '<td>' + escapeHtml(r.batch_no||'-') + '</td>' +
-                '<td>' + (r.in_date||'-') + '</td>' +
-                '<td><input type="checkbox" class="in-cb" data-id="' + escapeHtml(r.unique_id) + '"></td>' +
-                '<td>' + escapeHtml(r.unique_id||'-') + '</td>' +
-                '<td><button class="btn btn-sm" onclick="window.reprintTagFromGlobal(\'' + escapeHtml(r.unique_id) + '\')">🖨️ 补打</button><button class="btn btn-sm btn-danger" onclick="window.deleteInRecordFromGlobal(\'' + escapeHtml(r.unique_id) + '\')">🗑️</button></td>' +
-            '</tr>'
-        ).join('');
+        
+        const { data } = await query.order('created_at', { ascending: false });
+        inRecordsCache = data || [];
+        
+        // 更新待入仓汇总
+        if (currentInSubTab === 'pending') {
+            updatePendingInSummary(data);
+            const tbody = document.getElementById('inPendingTableBody');
+            if (!data || data.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="14" style="text-align:center">暂无待入仓记录</td></tr>';
+                return;
+            }
+            tbody.innerHTML = data.map(r => 
+                '<tr>' +
+                    '<td><input type="checkbox" class="in-cb" data-id="' + escapeHtml(r.unique_id) + '"></td>' +
+                    '<td>⏳待入仓</td>' +
+                    '<td>' + escapeHtml(r.spec||'-') + '</td>' +
+                    '<td>' + escapeHtml(r.color_no||'-') + '</td>' +
+                    '<td>' + escapeHtml(r.machine_no||'-') + '</td>' +
+                    '<td>' + (r.gross_weight ? r.gross_weight+'kg' : '-') + '</td>' +
+                    '<td>' + (r.quantity||'-') + '</td>' +
+                    '<td>' + (r.tube_weight ? r.tube_weight+'kg' : '-') + '</td>' +
+                    '<td>' + (r.box_weight ? r.box_weight+'kg' : '-') + '</td>' +
+                    '<td>' + (r.net_weight ? r.net_weight+'kg' : '-') + '</td>' +
+                    '<td>' + escapeHtml(r.batch_no||'-') + '</td>' +
+                    '<td>' + (r.in_date||r.created_at||'-') + '</td>' +
+                    '<td>' + escapeHtml(r.unique_id||'-') + '</td>' +
+                    '<td><button class="btn btn-sm" onclick="window.reprintTagFromGlobal(\'' + escapeHtml(r.unique_id) + '\')">🖨️ 补打</button></td>' +
+                '</tr>'
+            ).join('');
+        } else {
+            const tbody = document.getElementById('inAllTableBody');
+            if (!data || data.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="14" style="text-align:center">暂无已入仓/已出库记录</td></tr>';
+                return;
+            }
+            tbody.innerHTML = data.map(r => 
+                '<tr>' +
+                    '<td><input type="checkbox" class="in-cb" data-id="' + escapeHtml(r.unique_id) + '"></td>' +
+                    '<td>' + (r.status === '已入仓' ? '✅已入仓' : '📤已出库') + '</td>' +
+                    '<td>' + escapeHtml(r.spec||'-') + '</td>' +
+                    '<td>' + escapeHtml(r.color_no||'-') + '</td>' +
+                    '<td>' + escapeHtml(r.machine_no||'-') + '</td>' +
+                    '<td>' + (r.gross_weight ? r.gross_weight+'kg' : '-') + '</td>' +
+                    '<td>' + (r.quantity||'-') + '</td>' +
+                    '<td>' + (r.tube_weight ? r.tube_weight+'kg' : '-') + '</td>' +
+                    '<td>' + (r.box_weight ? r.box_weight+'kg' : '-') + '</td>' +
+                    '<td>' + (r.net_weight ? r.net_weight+'kg' : '-') + '</td>' +
+                    '<td>' + escapeHtml(r.batch_no||'-') + '</td>' +
+                    '<td>' + (r.in_date||r.created_at||'-') + '</td>' +
+                    '<td>' + escapeHtml(r.unique_id||'-') + '</td>' +
+                    '<td><button class="btn btn-sm" onclick="window.reprintTagFromGlobal(\'' + escapeHtml(r.unique_id) + '\')">🖨️ 补打</button>' +
+                        '<button class="btn btn-sm btn-danger" onclick="window.deleteInRecordFromGlobal(\'' + escapeHtml(r.unique_id) + '\')">🗑️</button></td>' +
+                '</tr>'
+            ).join('');
+        }
+    }
+
+    // ===== 更新待入仓汇总卡片 =====
+    function updatePendingInSummary(data) {
+        const summaryDiv = document.getElementById('pendingInSummary');
+        if (!summaryDiv) return;
+        const summaryMap = new Map();
+        for (let item of (data || [])) {
+            const key = item.spec + '|' + (item.batch_no || '');
+            if (!summaryMap.has(key)) summaryMap.set(key, { spec: item.spec, batch: item.batch_no || '-', qty: 0, net: 0 });
+            let sum = summaryMap.get(key);
+            sum.qty += item.quantity || 0;
+            sum.net += item.net_weight || 0;
+        }
+        const summaryArray = Array.from(summaryMap.values());
+        if (summaryArray.length === 0) {
+            summaryDiv.innerHTML = '<span>暂无待入仓产品</span>';
+        } else {
+            summaryDiv.innerHTML = summaryArray.map(s => 
+                '<div class="pending-summary-item">📦 <strong>' + escapeHtml(s.spec) + '</strong> 批号: ' + escapeHtml(s.batch) + ' 共 <strong>' + s.qty + '</strong> 个 净重 <strong>' + s.net.toFixed(2) + '</strong> kg</div>'
+            ).join('');
+        }
     }
 
     async function loadOutRecords() {
@@ -926,7 +1182,10 @@
                         '<div style="margin-top:15px;padding:12px;background:#f0f6fa;border-radius:12px;"><p>💡 扫码枪扫描标签二维码后，自动转为待出库</p></div>' +
                     '</div>' +
                     '<div id="stockPanel" class="panel" style="display: ' + (currentTab === 'stock' ? 'block' : 'none') + '">' +
-                        '<div class="sub-tab-bar"><div class="sub-tab ' + (currentSubTab === 'current' ? 'active' : '') + '" data-subtab="current">📦 当前库存</div><div class="sub-tab ' + (currentSubTab === 'pending' ? 'active' : '') + '" data-subtab="pending">⏳ 待出库列表 <span id="pendingCount" style="background:#e65100;color:white;border-radius:50%;padding:0 8px;font-size:12px;">0</span></div></div>' +
+                        '<div class="sub-tab-bar">' +
+                            '<div class="sub-tab ' + (currentSubTab === 'current' ? 'active' : '') + '" data-subtab="current">📦 当前库存</div>' +
+                            '<div class="sub-tab ' + (currentSubTab === 'pending' ? 'active' : '') + '" data-subtab="pending">⏳ 待出库列表 <span id="pendingCount" style="background:#e65100;color:white;border-radius:50%;padding:0 8px;font-size:12px;">0</span></div>' +
+                        '</div>' +
                         '<div id="currentStockPanel" style="display: ' + (currentSubTab === 'current' ? 'block' : 'none') + '"><div class="search-bar"><input type="text" id="stockSearch" placeholder="搜索规格/色号/批号..."><button class="btn" id="refreshStockBtn">刷新</button></div><div id="stockList"></div></div>' +
                         '<div id="pendingStockPanel" style="display: ' + (currentSubTab === 'pending' ? 'block' : 'none') + '">' +
                             '<div id="pendingSummary" class="pending-summary"></div>' +
@@ -935,9 +1194,33 @@
                         '</div>' +
                     '</div>' +
                     '<div id="inPanel" class="panel" style="display: ' + (currentTab === 'in' ? 'block' : 'none') + '">' +
-                        '<div class="batch-bar"><div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;"><button class="btn btn-danger" id="batchDeleteInBtn">🗑️ 批量删除</button><button class="select-all-btn" id="selectAllInBtn">✅ 全选</button><button class="select-all-btn" id="deselectAllInBtn" style="background:#78909c;">⬜ 取消全选</button></div></div>' +
-                        '<div class="search-bar"><input type="text" id="inSearch" placeholder="搜索规格/色号/批号..."><button class="btn" id="searchInBtn">搜索</button><button class="btn" id="refreshInBtn">全部</button></div>' +
-                        '<div class="table-wrapper"><table class="data-table"><thead><tr><th>规格</th><th>色号</th><th>机号</th><th>毛重</th><th>数量</th><th>筒重</th><th>箱重</th><th>净重</th><th>批号</th><th>日期</th><th style="width:30px"><input type="checkbox" id="selectAllIn"></th><th>标签ID</th><th>操作</th></tr></thead><tbody id="inTableBody"></tbody></table></div>' +
+                        '<div class="sub-tab-bar">' +
+                            '<div class="sub-tab ' + (currentInSubTab === 'pending' ? 'active' : '') + '" data-in-subtab="pending">⏳ 待入仓</div>' +
+                            '<div class="sub-tab ' + (currentInSubTab === 'all' ? 'active' : '') + '" data-in-subtab="all">📋 全部记录</div>' +
+                        '</div>' +
+                        '<div id="pendingInPanel" style="display: ' + (currentInSubTab === 'pending' ? 'block' : 'none') + '">' +
+                            '<div id="pendingInSummary" class="pending-summary"></div>' +
+                            '<div class="batch-bar">' +
+                                '<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">' +
+                                    '<button class="btn btn-success" id="confirmInBtn">✅ 确认入仓</button>' +
+                                    '<button class="select-all-btn" id="selectAllInBtn">✅ 全选</button>' +
+                                    '<button class="select-all-btn" id="deselectAllInBtn" style="background:#78909c;">⬜ 取消全选</button>' +
+                                    '<button class="btn btn-export" id="viewSummaryInBtn">📊 查看汇总</button>' +
+                                '</div>' +
+                            '</div>' +
+                            '<div class="table-wrapper"><table class="data-table"><thead><tr><th style="width:30px"><input type="checkbox" id="selectAllIn"></th><th>状态</th><th>规格</th><th>色号</th><th>机号</th><th>毛重</th><th>数量</th><th>筒重</th><th>箱重</th><th>净重</th><th>批号</th><th>日期</th><th>标签ID</th><th>操作</th></tr></thead><tbody id="inPendingTableBody"></tbody></table></div>' +
+                        '</div>' +
+                        '<div id="allInPanel" style="display: ' + (currentInSubTab === 'all' ? 'block' : 'none') + '">' +
+                            '<div class="batch-bar">' +
+                                '<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">' +
+                                    '<button class="btn btn-danger" id="batchDeleteInBtn">🗑️ 批量删除</button>' +
+                                    '<button class="select-all-btn" id="selectAllInAllBtn">✅ 全选</button>' +
+                                    '<button class="select-all-btn" id="deselectAllInAllBtn" style="background:#78909c;">⬜ 取消全选</button>' +
+                                    '<button class="btn btn-export" id="viewSummaryAllBtn">📊 查看汇总</button>' +
+                                '</div>' +
+                            '</div>' +
+                            '<div class="table-wrapper"><table class="data-table"><thead><tr><th style="width:30px"><input type="checkbox" id="selectAllInAll"></th><th>状态</th><th>规格</th><th>色号</th><th>机号</th><th>毛重</th><th>数量</th><th>筒重</th><th>箱重</th><th>净重</th><th>批号</th><th>日期</th><th>标签ID</th><th>操作</th></tr></thead><tbody id="inAllTableBody"></tbody></table></div>' +
+                        '</div>' +
                     '</div>' +
                     '<div id="outPanel" class="panel" style="display: ' + (currentTab === 'out' ? 'block' : 'none') + '">' +
                         '<div class="batch-bar">' +
@@ -964,7 +1247,6 @@
         bindEvents();
     }
 
-    // ===== 计算净重 =====
     function calcNet() {
         let gross = parseFloat(document.getElementById('gross')?.value) || 0;
         let tong = parseFloat(document.getElementById('tong')?.value) || 0;
@@ -975,19 +1257,56 @@
     }
 
     function bindEvents() {
+        // ===== 顶部主标签切换 =====
         document.querySelectorAll('.tab').forEach(tab => {
             tab.addEventListener('click', () => {
                 currentTab = tab.dataset.tab;
                 currentSubTab = 'current';
+                if (currentTab === 'in') currentInSubTab = 'pending';
                 render();
-                // 切到打印标签时恢复缓存
                 if (currentTab === 'print') {
                     const cached = loadPrintCache();
                     if (cached) fillPrintForm(cached);
                 }
+                if (currentTab === 'in') {
+                    loadInRecords();
+                }
+                if (currentTab === 'stock') {
+                    loadPendingList();
+                }
             });
         });
-        document.querySelectorAll('.sub-tab').forEach(tab => {
+
+        // ===== 入仓记录子标签切换（独立绑定） =====
+        const pendingTab = document.querySelector('.sub-tab[data-in-subtab="pending"]');
+        const allTab = document.querySelector('.sub-tab[data-in-subtab="all"]');
+        
+        if (pendingTab) {
+            pendingTab.addEventListener('click', function(e) {
+                e.stopPropagation();
+                currentInSubTab = 'pending';
+                document.querySelectorAll('.sub-tab[data-in-subtab]').forEach(t => t.classList.remove('active'));
+                this.classList.add('active');
+                document.getElementById('pendingInPanel').style.display = 'block';
+                document.getElementById('allInPanel').style.display = 'none';
+                loadInRecords();
+            });
+        }
+        
+        if (allTab) {
+            allTab.addEventListener('click', function(e) {
+                e.stopPropagation();
+                currentInSubTab = 'all';
+                document.querySelectorAll('.sub-tab[data-in-subtab]').forEach(t => t.classList.remove('active'));
+                this.classList.add('active');
+                document.getElementById('pendingInPanel').style.display = 'none';
+                document.getElementById('allInPanel').style.display = 'block';
+                loadInRecords();
+            });
+        }
+
+        // ===== 库存管理子标签 =====
+        document.querySelectorAll('.sub-tab:not([data-in-subtab])').forEach(tab => {
             tab.addEventListener('click', () => {
                 currentSubTab = tab.dataset.subtab;
                 render();
@@ -1000,7 +1319,7 @@
         document.getElementById('box')?.addEventListener('input', calcNet);
         calcNet();
 
-        // ===== 打印标签并入仓（核心：保存缓存） =====
+        // ===== 打印标签并入仓 =====
         document.getElementById('printBtn')?.addEventListener('click', async () => {
             const spec = document.getElementById('spec').value.trim();
             const color = document.getElementById('color').value.trim();
@@ -1019,7 +1338,6 @@
             const net = gross - tong - box;
             if (net <= 0) { showToast('净重计算错误'); return; }
             
-            // ★ 保存本次打印数据（毛重不保存）
             const cacheData = { spec, color, machine, qty, tong, box, handler, batch };
             savePrintCache(cacheData);
             
@@ -1033,17 +1351,17 @@
             });
             if (tagError) { showToast('保存失败: ' + tagError.message); return; }
             
+            // 入仓记录状态为"待入仓"，不更新库存
             await supabase.from('in_records').insert({ 
                 unique_id: tagId, spec, color_no: color, machine_no: machine, quantity: qty, 
                 gross_weight: gross, tube_weight: tong, box_weight: box, 
-                package_type: handler, batch_no: batch, net_weight: net, in_date: printDate 
+                package_type: handler, batch_no: batch, net_weight: net, 
+                in_date: printDate, status: '待入仓', created_at: new Date().toISOString() 
             });
             
-            await updateStock(spec, color, batch, qty, net);
             await printLabel(tagId, { spec, color, machine, qty, gross, tong, box, net, handler, batch });
             
-            showToast('✅ 打印成功！标签ID: ' + tagId);
-            // 打印后毛重清空，其他保留
+            showToast('✅ 打印成功！标签ID: ' + tagId + '（待入仓）');
             document.getElementById('gross').value = '';
             calcNet();
             loadAll();
@@ -1141,6 +1459,8 @@
                         quantity: tag.qty, gross_weight: tag.gross, tube_weight: tag.tong, box_weight: tag.box,
                         net_weight: tag.net, batch_no: tag.batch, out_date: new Date().toLocaleString()
                     });
+                    // 更新对应入仓记录状态为"已出库"
+                    await supabase.from('in_records').update({ status: '已出库' }).eq('unique_id', tagId);
                     await updateStock(tag.spec, tag.color, tag.batch, -tag.qty, -tag.net);
                     success++;
                     outRecords.push({
@@ -1166,6 +1486,7 @@
             }
         });
 
+        // ===== 待出库全选 =====
         document.getElementById('selectAllPendingBtn')?.addEventListener('click', () => {
             document.querySelectorAll('.pending-cb').forEach(cb => cb.checked = true);
         });
@@ -1176,17 +1497,113 @@
             document.querySelectorAll('.pending-cb').forEach(cb => cb.checked = this.checked);
         });
 
+        // ===== 待入仓：全选/取消全选 =====
         document.getElementById('selectAllInBtn')?.addEventListener('click', () => {
-            document.querySelectorAll('.in-cb').forEach(cb => cb.checked = true);
+            document.querySelectorAll('#pendingInPanel .in-cb').forEach(cb => cb.checked = true);
         });
         document.getElementById('deselectAllInBtn')?.addEventListener('click', () => {
-            document.querySelectorAll('.in-cb').forEach(cb => cb.checked = false);
+            document.querySelectorAll('#pendingInPanel .in-cb').forEach(cb => cb.checked = false);
         });
         document.getElementById('selectAllIn')?.addEventListener('change', function() {
-            document.querySelectorAll('.in-cb').forEach(cb => cb.checked = this.checked);
+            document.querySelectorAll('#pendingInPanel .in-cb').forEach(cb => cb.checked = this.checked);
         });
-        document.getElementById('batchDeleteInBtn')?.addEventListener('click', batchDeleteInRecords);
 
+        // ===== 全部记录：全选/取消全选 =====
+        document.getElementById('selectAllInAllBtn')?.addEventListener('click', () => {
+            document.querySelectorAll('#allInPanel .in-cb').forEach(cb => cb.checked = true);
+        });
+        document.getElementById('deselectAllInAllBtn')?.addEventListener('click', () => {
+            document.querySelectorAll('#allInPanel .in-cb').forEach(cb => cb.checked = false);
+        });
+        document.getElementById('selectAllInAll')?.addEventListener('change', function() {
+            document.querySelectorAll('#allInPanel .in-cb').forEach(cb => cb.checked = this.checked);
+        });
+
+        // ===== 确认入仓 =====
+        document.getElementById('confirmInBtn')?.addEventListener('click', () => {
+            const cbs = document.querySelectorAll('#pendingInPanel .in-cb:checked');
+            if (cbs.length === 0) {
+                showToast('请勾选要确认入仓的记录');
+                return;
+            }
+            const ids = new Set();
+            cbs.forEach(cb => ids.add(cb.getAttribute('data-id')));
+            const selected = inRecordsCache.filter(r => ids.has(r.unique_id) && r.status === '待入仓');
+            if (!selected.length) {
+                showToast('所选记录不是待入仓状态');
+                return;
+            }
+            showConfirmInDialog(selected, async () => {
+                let success = 0;
+                for (const r of selected) {
+                    // 更新入仓记录状态
+                    await supabase.from('in_records').update({ status: '已入仓' }).eq('unique_id', r.unique_id);
+                    // 更新库存
+                    await updateStock(r.spec, r.color_no, r.batch_no, r.quantity, r.net_weight);
+                    success++;
+                }
+                showToast('✅ 确认入仓完成！成功: ' + success);
+                loadAll();
+            });
+        });
+
+        // ===== 查看汇总（待入仓） =====
+        document.getElementById('viewSummaryInBtn')?.addEventListener('click', () => {
+            const cbs = document.querySelectorAll('#pendingInPanel .in-cb:checked');
+            if (cbs.length === 0) {
+                showToast('请先勾选要汇总的记录');
+                return;
+            }
+            const ids = new Set();
+            cbs.forEach(cb => ids.add(cb.getAttribute('data-id')));
+            const selected = inRecordsCache.filter(r => ids.has(r.unique_id));
+            if (!selected.length) {
+                showToast('未找到选中数据');
+                return;
+            }
+            showSummaryModal(selected, '待入仓汇总');
+        });
+
+        // ===== 查看汇总（全部记录） =====
+        document.getElementById('viewSummaryAllBtn')?.addEventListener('click', () => {
+            const cbs = document.querySelectorAll('#allInPanel .in-cb:checked');
+            if (cbs.length === 0) {
+                showToast('请先勾选要汇总的记录');
+                return;
+            }
+            const ids = new Set();
+            cbs.forEach(cb => ids.add(cb.getAttribute('data-id')));
+            const selected = inRecordsCache.filter(r => ids.has(r.unique_id));
+            if (!selected.length) {
+                showToast('未找到选中数据');
+                return;
+            }
+            showSummaryModal(selected, '已入仓/已出库汇总');
+        });
+
+        // ===== 批量删除（全部记录） =====
+        document.getElementById('batchDeleteInBtn')?.addEventListener('click', async () => {
+            const cbs = document.querySelectorAll('#allInPanel .in-cb:checked');
+            if (cbs.length === 0) { showToast('请勾选要删除的入仓记录'); return; }
+            if (!confirm('确定批量删除 ' + cbs.length + ' 条入仓记录吗？将同步删除标签并回滚库存！')) return;
+            let success = 0;
+            for (const cb of cbs) {
+                const tagId = cb.getAttribute('data-id');
+                const { data: tag } = await supabase.from('tag_records').select('*').eq('tag_id', tagId).single();
+                if (tag && (tag.status === '已入库' || tag.status === '已出库')) {
+                    await supabase.from('in_records').delete().eq('unique_id', tagId);
+                    await supabase.from('tag_records').delete().eq('tag_id', tagId);
+                    if (tag.status === '已入库') {
+                        await updateStock(tag.spec, tag.color, tag.batch, -tag.qty, -tag.net);
+                    }
+                    success++;
+                }
+            }
+            showToast('✅ 批量删除完成！成功: ' + success);
+            loadAll();
+        });
+
+        // ===== 出仓记录全选 =====
         document.getElementById('selectAllOutBtn')?.addEventListener('click', () => {
             document.querySelectorAll('.out-cb').forEach(cb => cb.checked = true);
         });
@@ -1197,6 +1614,7 @@
             document.querySelectorAll('.out-cb').forEach(cb => cb.checked = this.checked);
         });
 
+        // ===== 出仓记录导出送货明细 =====
         document.getElementById('exportDeliveryBtn')?.addEventListener('click', () => {
             const cbs = document.querySelectorAll('.out-cb:checked');
             if (cbs.length === 0) { showToast('请先勾选要导出的记录'); return; }
@@ -1219,6 +1637,7 @@
             showCustomerModalAndExport(records);
         });
 
+        // ===== 出仓记录导出CSV =====
         document.getElementById('exportSelectedOutBtn')?.addEventListener('click', () => {
             const cbs = document.querySelectorAll('.out-cb:checked');
             if (cbs.length === 0) { showToast('请勾选要导出的记录'); return; }
@@ -1258,6 +1677,7 @@
             ]);
         });
 
+        // ===== 出仓记录筛选 =====
         document.getElementById('filterOutBtn')?.addEventListener('click', () => {
             const from = document.getElementById('outDateFrom').value;
             const to = document.getElementById('outDateTo').value;
@@ -1279,20 +1699,6 @@
             loadOutRecords();
         });
 
-        document.getElementById('searchInBtn')?.addEventListener('click', async () => {
-            const kw = document.getElementById('inSearch').value.trim();
-            if (!kw) { loadInRecords(); return; }
-            const { data } = await supabase.from('in_records').select('*').or('spec.ilike.%' + kw + '%,color_no.ilike.%' + kw + '%,batch_no.ilike.%' + kw + '%');
-            const tbody = document.getElementById('inTableBody');
-            if (!data || !data.length) {
-                tbody.innerHTML = '<tr><td colspan="12" style="text-align:center">未找到</td></tr>';
-                return;
-            }
-            tbody.innerHTML = data.map(r => 
-                '<tr><td>' + escapeHtml(r.spec||'-') + '</td><td>' + escapeHtml(r.color_no||'-') + '</td><td>' + escapeHtml(r.machine_no||'-') + '</td><td>' + (r.gross_weight ? r.gross_weight+'kg' : '-') + '</td><td>' + (r.quantity||'-') + '</td><td>' + (r.tube_weight ? r.tube_weight+'kg' : '-') + '</td><td>' + (r.box_weight ? r.box_weight+'kg' : '-') + '</td><td>' + (r.net_weight ? r.net_weight+'kg' : '-') + '</td><td>' + escapeHtml(r.batch_no||'-') + '</td><td>' + (r.in_date||'-') + '</td><td><input type="checkbox" class="in-cb" data-id="' + escapeHtml(r.unique_id) + '"></td><td>' + escapeHtml(r.unique_id||'-') + '</td><td><button class="btn btn-sm" onclick="window.reprintTagFromGlobal(\'' + escapeHtml(r.unique_id) + '\')">🖨️ 补打</button><button class="btn btn-sm btn-danger" onclick="window.deleteInRecordFromGlobal(\'' + escapeHtml(r.unique_id) + '\')">🗑️</button></td></tr>'
-            ).join('');
-        });
-        document.getElementById('refreshInBtn')?.addEventListener('click', loadInRecords);
         document.getElementById('searchOutBtn')?.addEventListener('click', loadOutRecords);
         document.getElementById('refreshOutBtn')?.addEventListener('click', loadOutRecords);
         document.getElementById('refreshStockBtn')?.addEventListener('click', loadStock);
@@ -1311,13 +1717,9 @@
             loadSummary();
         }
         
-        // ===== 页面加载后恢复缓存 =====
         const cached = loadPrintCache();
         if (cached) {
-            // 延迟一下确保DOM已渲染
-            setTimeout(() => {
-                fillPrintForm(cached);
-            }, 100);
+            setTimeout(() => { fillPrintForm(cached); }, 100);
         }
         
         loadAll();
