@@ -139,7 +139,7 @@
             let currentTab = 'print';
             let currentSubTab = 'pendingIn';
             let scanTimer = null;
-            let isPrinting = false; // 防连点标志
+            let isPrinting = false;
 
             const PAGE_SIZE = 50;
             let inPage = 1, inTotal = 0;
@@ -594,11 +594,11 @@
                     '<td>' + escapeHtml(item.spec) + '</td>' +
                     '<td>' + escapeHtml(item.color || '-') + '</td>' +
                     '<td>' + escapeHtml(item.machine || '-') + '</td>' +
-                    '<td>' + (item.gross || 0).toFixed(2) + 'kg</td>' +
+                    '<td>' + Number(item.gross || 0).toFixed(2) + 'kg</td>' +
                     '<td>' + item.qty + '</td>' +
-                    '<td>' + (item.tong || 0).toFixed(2) + 'kg</td>' +
-                    '<td>' + (item.box || 0).toFixed(2) + 'kg</td>' +
-                    '<td>' + (item.net || 0).toFixed(2) + 'kg</td>' +
+                    '<td>' + Number(item.tong || 0).toFixed(2) + 'kg</td>' +
+                    '<td>' + Number(item.box || 0).toFixed(2) + 'kg</td>' +
+                    '<td>' + Number(item.net || 0).toFixed(2) + 'kg</td>' +
                     '<td>' + escapeHtml(item.batch || '-') + '</td>' +
                     '<td>' + (item.pending_time ? new Date(item.pending_time).toLocaleString() : '-') + '</td>' +
                     '<td>' + escapeHtml(item.tag_id) + '</td>' +
@@ -619,7 +619,7 @@
                 if (!filtered.length) { container.innerHTML = '<p style="font-weight:600;">暂无库存</p>'; return; }
                 container.innerHTML = filtered.map(i =>
                     '<div class="stock-item"><div><strong>' + escapeHtml(i.spec) + '</strong> ' + (i.color_no ? '| 色号:' + escapeHtml(i.color_no) : '') + (i.batch_no ? '| 批号:' + escapeHtml(i.batch_no) : '') +
-                    '</div><div>数量: ' + i.quantity + ' | 净重: ' + (i.net_weight || 0).toFixed(2) + 'kg</div></div>'
+                    '</div><div>数量: ' + i.quantity + ' | 净重: ' + Number(i.net_weight || 0).toFixed(2) + 'kg</div></div>'
                 ).join('');
             }
 
@@ -650,17 +650,16 @@
                     return;
                 }
                 
-                // 【关键修改】表头有13列，这里td也是13列，防止错位，并加入删除按钮
                 tbody.innerHTML = data.map(r =>
                     '<tr>' +
                     '<td>' + escapeHtml(r.spec || '-') + '</td>' +
                     '<td>' + escapeHtml(r.color || '-') + '</td>' +
                     '<td>' + escapeHtml(r.machine || '-') + '</td>' +
-                    '<td>' + (r.gross ? r.gross + 'kg' : '-') + '</td>' +
+                    '<td>' + (r.gross ? Number(r.gross).toFixed(2) + 'kg' : '-') + '</td>' +
                     '<td>' + (r.qty || '-') + '</td>' +
-                    '<td>' + (r.tong ? r.tong + 'kg' : '-') + '</td>' +
-                    '<td>' + (r.box ? r.box + 'kg' : '-') + '</td>' +
-                    '<td>' + (r.net ? r.net + 'kg' : '-') + '</td>' +
+                    '<td>' + (r.tong ? Number(r.tong).toFixed(2) + 'kg' : '-') + '</td>' +
+                    '<td>' + (r.box ? Number(r.box).toFixed(2) + 'kg' : '-') + '</td>' +
+                    '<td>' + (r.net ? Number(r.net).toFixed(2) + 'kg' : '-') + '</td>' +
                     '<td>' + escapeHtml(r.batch || '-') + '</td>' +
                     '<td>' + (r.created_at ? new Date(r.created_at).toLocaleString() : '-') + '</td>' +
                     '<td><input type="checkbox" class="in-cb pending-in-cb" data-id="' + escapeHtml(r.tag_id) + '"></td>' +
@@ -698,17 +697,16 @@
                     return;
                 }
                 
-                // 【关键修改】这里包含“状态”列，总共14列
                 tbody.innerHTML = data.map(r =>
                     '<tr>' +
                     '<td>' + escapeHtml(r.spec || '-') + '</td>' +
                     '<td>' + escapeHtml(r.color || '-') + '</td>' +
                     '<td>' + escapeHtml(r.machine || '-') + '</td>' +
-                    '<td>' + (r.gross ? r.gross + 'kg' : '-') + '</td>' +
+                    '<td>' + (r.gross ? Number(r.gross).toFixed(2) + 'kg' : '-') + '</td>' +
                     '<td>' + (r.qty || '-') + '</td>' +
-                    '<td>' + (r.tong ? r.tong + 'kg' : '-') + '</td>' +
-                    '<td>' + (r.box ? r.box + 'kg' : '-') + '</td>' +
-                    '<td>' + (r.net ? r.net + 'kg' : '-') + '</td>' +
+                    '<td>' + (r.tong ? Number(r.tong).toFixed(2) + 'kg' : '-') + '</td>' +
+                    '<td>' + (r.box ? Number(r.box).toFixed(2) + 'kg' : '-') + '</td>' +
+                    '<td>' + (r.net ? Number(r.net).toFixed(2) + 'kg' : '-') + '</td>' +
                     '<td>' + escapeHtml(r.batch || '-') + '</td>' +
                     '<td>' + (r.created_at ? new Date(r.created_at).toLocaleString() : '-') + '</td>' +
                     '<td>' + escapeHtml(r.status || '-') + '</td>' +
@@ -760,11 +758,11 @@
                     '<td>' + escapeHtml(r.spec || '-') + '</td>' +
                     '<td>' + escapeHtml(r.color_no || '-') + '</td>' +
                     '<td>' + escapeHtml(r.machine_no || '-') + '</td>' +
-                    '<td>' + (r.gross_weight ? r.gross_weight + 'kg' : '-') + '</td>' +
+                    '<td>' + (r.gross_weight ? Number(r.gross_weight).toFixed(2) + 'kg' : '-') + '</td>' +
                     '<td>' + (r.quantity || '-') + '</td>' +
-                    '<td>' + (r.tube_weight ? r.tube_weight + 'kg' : '-') + '</td>' +
-                    '<td>' + (r.box_weight ? r.box_weight + 'kg' : '-') + '</td>' +
-                    '<td>' + (r.net_weight ? r.net_weight + 'kg' : '-') + '</td>' +
+                    '<td>' + (r.tube_weight ? Number(r.tube_weight).toFixed(2) + 'kg' : '-') + '</td>' +
+                    '<td>' + (r.box_weight ? Number(r.box_weight).toFixed(2) + 'kg' : '-') + '</td>' +
+                    '<td>' + (r.net_weight ? Number(r.net_weight).toFixed(2) + 'kg' : '-') + '</td>' +
                     '<td>' + escapeHtml(r.batch_no || '-') + '</td>' +
                     '<td>' + (r.out_date || '-') + '</td>' +
                     '<td><input type="checkbox" class="out-cb" data-id="' + escapeHtml(r.unique_id) + '"></td>' +
@@ -1244,8 +1242,8 @@
                     }
                     tbody.innerHTML = data.map(r =>
                         '<tr><td>' + escapeHtml(r.spec || '-') + '</td><td>' + escapeHtml(r.color_no || '-') + '</td><td>' + escapeHtml(r.machine_no || '-') +
-                        '</td><td>' + (r.gross_weight ? r.gross_weight + 'kg' : '-') + '</td><td>' + (r.quantity || '-') + '</td><td>' + (r.tube_weight ? r.tube_weight + 'kg' : '-') +
-                        '</td><td>' + (r.box_weight ? r.box_weight + 'kg' : '-') + '</td><td>' + (r.net_weight ? r.net_weight + 'kg' : '-') + '</td><td>' + escapeHtml(r.batch_no || '-') +
+                        '</td><td>' + (r.gross_weight ? Number(r.gross_weight).toFixed(2) + 'kg' : '-') + '</td><td>' + (r.quantity || '-') + '</td><td>' + (r.tube_weight ? Number(r.tube_weight).toFixed(2) + 'kg' : '-') +
+                        '</td><td>' + (r.box_weight ? Number(r.box_weight).toFixed(2) + 'kg' : '-') + '</td><td>' + (r.net_weight ? Number(r.net_weight).toFixed(2) + 'kg' : '-') + '</td><td>' + escapeHtml(r.batch_no || '-') +
                         '</td><td>' + (r.out_date || '-') + '</td><td><input type="checkbox" class="out-cb" data-id="' + escapeHtml(r.unique_id) + '"></td><td>' + escapeHtml(r.unique_id || '-') + '</td></tr>'
                     ).join('');
                     renderPagination('out');
